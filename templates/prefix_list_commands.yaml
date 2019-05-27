@@ -1,0 +1,8 @@
+commands:
+  provision:
+    create: '/configure application-assurance group {partition} ip-prefix-list {name} create'
+    add_prefix: '/configure application-assurance group {partition} ip-prefix-list {name} prefix {ip} name
+    {prefix_name}'
+  rollback:
+    remove:
+    remove_prefix:

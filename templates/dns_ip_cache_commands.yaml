@@ -1,0 +1,7 @@
+commands:
+  provision:
+    create: '/configure application-assurance group 1 dns-ip-cache "{name}" create'
+    add_domain: '/configure application-assurance group 1 dns-ip-cache "{name}" dns-match domain "{pr_name}" expression "{domain_name}$"'
+  rollback:
+    remove: null
+    remove_domain: null

@@ -1,0 +1,19 @@
+commands:
+  provision:
+    begin: '/configure mobile-gateway profile policy-options begin'
+    rule_unit: '/configure mobile-gateway profile policy-options policy-rule-unit {policy_rule_unit} flow-description 1
+    match aa-charging-group "{charging_group}"'
+    rule: '/configure mobile-gateway profile policy-options policy-rule {policy_rule} policy-rule-unit "{rule_unit}"
+    charging-rule-unit "{charging_rule_unit}" precedence {precedence}'
+    commit: '/configure mobile-gateway profile policy-options commit'
+  rollback:
+    begin: '/configure mobile-gateway profile policy-options begin'
+    rule_unit:
+    rule:
+    commit: '/configure mobile-gateway profile policy-options commit'
+
+
+
+
+
+

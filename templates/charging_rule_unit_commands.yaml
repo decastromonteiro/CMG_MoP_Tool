@@ -1,0 +1,21 @@
+commands:
+  provision:
+    begin: '/configure mobile-gateway profile policy-options begin'
+    name: '/configure mobile-gateway profile policy-options charging-rule-unit {name}'
+    rating-group: '/configure mobile-gateway profile policy-options charging-rule-unit {name} rating-group
+    {rating_group}'
+    service-id: '/configure mobile-gateway profile policy-options charging-rule-unit {name} service-identifier
+    {service_id}'
+    charging-method: '/configure mobile-gateway profile policy-options charging-rule-unit {name} charging-method
+    {charging_method}'
+    metering-method: '/configure mobile-gateway profile policy-options charging-rule-unit {name} metering-method
+    {metering_method}'
+    monitoring-key: '/configure mobile-gateway profile policy-options charging-rule-unit {name} monitoring-key
+    {monitoring_key}'
+    reporting-level: '/configure mobile-gateway profile policy-options charging-rule-unit {name} reporting-level
+    {reporting_level}'
+    commit: '/configure mobile-gateway profile policy-options commit'
+  rollback:
+    begin: '/configure mobile-gateway profile policy-options begin'
+    name: '/configure mobile-gateway profile policy-options no charging-rule-unit {name}'
+    commit: '/configure mobile-gateway profile policy-options commit'

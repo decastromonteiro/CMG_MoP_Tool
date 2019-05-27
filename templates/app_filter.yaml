@@ -1,0 +1,18 @@
+name: App-Filter Commands
+commands:
+  provision:
+    begin: '/configure application-assurance group {partition} policy begin'
+    entry: '/configure application-assurance group {partition} policy app-filter entry {entry} create'
+    description: '/configure application-assurance group {partition} policy app-filter entry {entry} description "policy-rule {pr_name}"'
+    application: '/configure application-assurance group {partition} policy app-filter entry {entry} application {application}'
+    server_address: '/configure application-assurance group {partition} policy app-filter entry {entry} server-address {l3_filter}'
+    ip_protocol: '/configure application-assurance group {partition} policy app-filter entry {entry} ip-protocol-num eq {ip_protocol}'
+    server_port: '/configure application-assurance group {partition} policy app-filter entry {entry} server-port {port_filter}'
+    expression: '/configure application-assurance group {partition} policy app-filter entry {entry} expression {count} {l7_expression}'
+    no_shutdown: '/configure application-assurance group {partition} policy app-filter entry {entry} no shutdown'
+    commit: '/configure application-assurance group {partition} policy commit'
+  rollback:
+    begin: '/configure application-assurance group {partition} policy begin'
+    shutdown: '/configure application-assurance group {partition} policy app-filter entry {entry} shutdown'
+    rollback: '/configure application-assurance group {partition} policy no app-filter entry {entry}'
+    commit: '/configure application-assurance group {partition} policy commit'
