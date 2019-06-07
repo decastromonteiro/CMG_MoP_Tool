@@ -232,8 +232,8 @@ def main():
     fb = YAML(project_name="FilterBase")
     fb.write_to_yaml({'FilterBase': filter_base})
 
-    f = YAML(project_name="Filter")
-    f.write_to_yaml({'Filter': filters})
+    f = YAML(project_name="PolicyRuleFilter")
+    f.write_to_yaml({'PolicyRuleFilter': filters})
 
     pr = YAML(project_name="PolicyRule")
     pr.write_to_yaml({'PolicyRule': pcc_rules})
