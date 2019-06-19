@@ -134,13 +134,16 @@ def parse_pcc_rule(file_input):
                     pcc_rule_dict = dict()
                     parameter_dict = dict()
                     pcc_rule_dict[match[0]] = parameter_dict
+            if line.startswith('precedence'):
+                precedence_match = re.findall(precedence_pattern, line)
+                if precedence_match:
+                    parameter_dict.update({'precedence': precedence_match[0]})
             if line.startswith('header-enrichment-type'):
                 header_enrichment_type_match = re.findall(header_enrichment_type_pattern, line)
                 if header_enrichment_type_match:
-                    if parameter_dict:
-                        parameter_dict.update(
-                            {'header-enrichment-type': header_enrichment_type_match[0]}
-                        )
+                    parameter_dict.update(
+                        {'header-enrichment-type': header_enrichment_type_match[0]}
+                    )
 
             if line.startswith('monitoring-key'):
                 monitoring_key_match = re.findall(monitoring_key_pattern, line)
@@ -190,7 +193,7 @@ def parse_pcc_rule(file_input):
                 if service_id_match:
                     parameter_dict.update({'service-id': service_id_match[0]})
                     list_of_pcc_rule.append(pcc_rule_dict)
-
+        list_of_pcc_rule = sorted(list_of_pcc_rule, key=lambda k: k[list(k.keys())[0]]['precedence'])
         return list_of_pcc_rule
 
 
