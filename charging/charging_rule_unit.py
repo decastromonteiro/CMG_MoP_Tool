@@ -51,7 +51,7 @@ def get_charging_rule_unit(policy_rule_yml):
     return lista
 
 
-def export_yaml(lista, project_name='charging_rule_unit'):
+def export_yaml(lista, project_name='ChargingRuleUnit'):
     wy = YAML(project_name=project_name)
     path = wy.write_to_yaml({'ChargingRuleUnit': lista})
     return path
@@ -120,8 +120,8 @@ def create_charging_rule_unit_mop(yaml_cru, yaml_template):
 
 
 yaml_cru = export_yaml(
-    get_charging_rule_unit('/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRule.yaml'))
+    get_charging_rule_unit(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml'))
 yaml_template = os.path.abspath(
-    '/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/templates/charging_rule_unit_commands.yaml')
+    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
 
 create_charging_rule_unit_mop(yaml_cru, yaml_template)

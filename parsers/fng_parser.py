@@ -7,7 +7,9 @@ filter_name_pattern = r'filter = (.+)'
 l7_uri_pattern = r'l7-uri = (.+)'
 protocol_id_pattern = r'protocol-id = (.+)'
 destination_address_pattern = r'destination-address = (.+)'
+ipv6_destination_address_pattern = r'ipv6-destination-address = (.+)'
 destination_port_list_pattern = r'destination-port-list = (.+)'
+domain_name_pattern = r'domain-name = (.+)'
 host_name_pattern = r'host-name = (.+)'
 pcc_rule_name_pattern = r'pcc-rule-name : (.+)'
 header_enrichment_type_pattern = r'header-enrichment-type = (.+)'
@@ -42,26 +44,47 @@ def parse_filter_base(file_input):
                         filter_base_dict[match[0]].append(
                             {filter_match[0]: filter_dict}
                         )
+            # IPv4 Destination Address
             if line.startswith('destination-address'):
                 destination_address_match = re.findall(destination_address_pattern, line)
                 if destination_address_match:
                     filter_dict.update({'destination-address': destination_address_match[0]})
+            # IPv6 Destination Address
+            if line.startswith('ipv6-destination-address'):
+                ipv6_destination_address_match = re.findall(ipv6_destination_address_pattern, line)
+                if ipv6_destination_address_match:
+                    filter_dict.update({'ipv6-destination-address': ipv6_destination_address_match[0]})
+            # Domain Name
+            if line.startswith('domain-name'):
+                domain_name_match = re.findall(domain_name_pattern, line)
+                if domain_name_match:
+                    filter_dict.update({'domain-name': domain_name_match[0]})
+            # Port List
             if line.startswith('destination-port-list'):
                 destination_port_list_match = re.findall(destination_port_list_pattern, line)
                 if destination_port_list_match:
                     filter_dict.update({'destination-port-list': destination_port_list_match[0]})
+            # Host Name (L7)
+            if line.startswith('host-name'):
+                host_name_match = re.findall(host_name_pattern, line)
+                if host_name_match:
+                    filter_dict.update({'host-name': host_name_match[0]})
+            # L7 URI
             if line.startswith('l7-uri'):
                 l7_uri_match = re.findall(l7_uri_pattern, line)
                 if l7_uri_match:
                     filter_dict.update({'l7-uri': l7_uri_match[0]})
+            # Precedence
             if line.startswith('precedence'):
                 precedence_match = re.findall(precedence_pattern, line)
                 if precedence_match:
                     filter_dict.update({'precedence': precedence_match[0]})
+            # Protocol ID
             if line.startswith('protocol-id'):
                 protocol_id_match = re.findall(protocol_id_pattern, line)
                 if protocol_id_match:
                     filter_dict.update({'protocol-id': protocol_id_match[0]})
+            # IPv4 Source Address
             if line.startswith('source-address'):
                 source_address_match = re.findall(source_address_pattern, line)
                 if source_address_match:
@@ -92,30 +115,53 @@ def parse_pcc_rule_filter(file_input):
                         pcc_rule_dict[match[0]].append(
                             {filter_match[0]: filter_dict}
                         )
+            # IPv4 Destination Address
             if line.startswith('destination-address'):
                 destination_address_match = re.findall(destination_address_pattern, line)
                 if destination_address_match:
                     filter_dict.update({'destination-address': destination_address_match[0]})
+            # IPv6 Destination Address
+            if line.startswith('ipv6-destination-address'):
+                ipv6_destination_address_match = re.findall(ipv6_destination_address_pattern, line)
+                if ipv6_destination_address_match:
+                    filter_dict.update({'ipv6-destination-address': ipv6_destination_address_match[0]})
+            # Domain Name
+            if line.startswith('domain-name'):
+                domain_name_match = re.findall(domain_name_pattern, line)
+                if domain_name_match:
+                    filter_dict.update({'domain-name': domain_name_match[0]})
+            # Port List
             if line.startswith('destination-port-list'):
                 destination_port_list_match = re.findall(destination_port_list_pattern, line)
                 if destination_port_list_match:
                     filter_dict.update({'destination-port-list': destination_port_list_match[0]})
-            if line.startswith('l7-uri'):
-                l7_uri_match = re.findall(l7_uri_pattern, line)
-                if l7_uri_match:
-                    filter_dict.update({'l7-uri': l7_uri_match[0]})
+            # Host Name (L7)
             if line.startswith('host-name'):
                 host_name_match = re.findall(host_name_pattern, line)
                 if host_name_match:
                     filter_dict.update({'host-name': host_name_match[0]})
+            # L7 URI
+            if line.startswith('l7-uri'):
+                l7_uri_match = re.findall(l7_uri_pattern, line)
+                if l7_uri_match:
+                    filter_dict.update({'l7-uri': l7_uri_match[0]})
+            # Precedence
             if line.startswith('precedence'):
                 precedence_match = re.findall(precedence_pattern, line)
                 if precedence_match:
                     filter_dict.update({'precedence': precedence_match[0]})
+            # Protocol ID
             if line.startswith('protocol-id'):
                 protocol_id_match = re.findall(protocol_id_pattern, line)
                 if protocol_id_match:
                     filter_dict.update({'protocol-id': protocol_id_match[0]})
+            # IPv4 Source Address
+            if line.startswith('source-address'):
+                source_address_match = re.findall(source_address_pattern, line)
+                if source_address_match:
+                    filter_dict.update(
+                        {'source-address': source_address_match[0]}
+                    )
 
         return list_of_pcc_rule
 
@@ -222,10 +268,10 @@ def parse_pcc_rule_base(file_input):
 
 
 def main():
-    fng_filter_base = '/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_filter_base'
-    fng_filters = '/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_filters'
-    pcc_rule = '/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_policy_rule'
-    pcc_rule_base = '/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_policy_rule_base'
+    fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filter_base'
+    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filters'
+    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule'
+    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule_base'
 
     filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)

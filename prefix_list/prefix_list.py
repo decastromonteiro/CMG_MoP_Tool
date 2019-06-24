@@ -1,4 +1,6 @@
 from utils.yaml import YAML
+import re
+import os
 
 
 def read_yaml_file(file_input):
@@ -33,8 +35,11 @@ def aggregate_address(input_list):
                 filter_base_aggregation = dict()
                 for filter_dict in list_of_filters_dict:
                     for filter_name in filter_dict:
-                        if filter_dict.get(filter_name).get('destination-address'):
-                            address = filter_dict.get(filter_name).get('destination-address')
+                        if filter_dict.get(filter_name).get('destination-address') or filter_dict.get(filter_name).get(
+                                'ipv6-destination-address'):
+                            address = filter_dict.get(filter_name).get('destination-address') or filter_dict.get(
+                                filter_name).get(
+                                'ipv6-destination-address')
                             protocol = filter_dict.get(filter_name).get('protocol-id', '0000')
                             ports = filter_dict.get(filter_name).get('destination-port-list', '0000')
                             domain = filter_dict.get(filter_name).get('domain-name', '0000')
@@ -115,14 +120,42 @@ def make_prefix_list_mop(prefix_yaml_input, command_yaml_input):
         for command in command_list:
             fout.write(command + '\n')
 
+    return os.path.abspath('mop_ip_prefix.txt')
 
-# a = get_filter('/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRuleFilter.yaml')
-# b = get_filter_base('/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/FilterBase.yaml')
-#
-# a.extend(b)
-#
-# export_yaml(a)
 
-make_prefix_list_mop('/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/prefix_list/PrefixList.yaml',
-                     '/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/templates/prefix_list_commands.yaml')
-# lista = arrange_prefix_lists('/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/prefix_list/PrefixList.yaml')
+def make_yaml_from_mop(mop_input):
+    prefix__name_pattern = r'ip-prefix-list (.+) create'
+    description_pattern = r'description (.+)'
+    prefix_pattern = r'prefix (.+) name'
+    with open(mop_input) as fin:
+        ip_prefix_dict = dict()
+        for line in fin:
+            line = line.strip()
+            if 'create' in line:
+                prefix_name_match = re.findall(prefix__name_pattern, line)
+                if prefix_name_match:
+                    if not ip_prefix_dict.get(prefix_name_match[0]):
+                        ip_prefix_dict.update({prefix_name_match[0]: dict()})
+
+            if 'description' in line:
+                description_match = re.findall(description_pattern, line)
+                if description_match:
+                    ip_prefix_dict.get(prefix_name_match[0]).update({description_match[0]: list()})
+
+            if 'prefix' in line:
+                prefix_match = re.findall(prefix_pattern, line)
+                if prefix_match:
+                    ip_prefix_dict.get(prefix_name_match[0]).get(description_match[0]).append(prefix_match[0])
+
+    return export_yaml(ip_prefix_dict)
+
+
+filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRuleFilter.yaml')
+filter_bases = get_filter_base(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\FilterBase.yaml')
+filters.extend(filter_bases)
+path = export_yaml(filters, project_name='PrePrefixList')
+
+mop_path = make_prefix_list_mop(path,
+                                r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
+
+make_yaml_from_mop(mop_path)
