@@ -1,5 +1,5 @@
 import re
-
+from collections import OrderedDict
 from utils.yaml import YAML
 
 filter_base_name_pattern = r'pcc-filter-base-name : (.+)'
@@ -24,24 +24,24 @@ source_address_pattern = r'source-address = (.+)'
 
 
 def parse_filter_base(file_input):
-    list_of_filter_base = list()
+    list_of_filter_base = dict()
     filter_base_dict = None
     with open(file_input) as fin:
         for line in fin:
             line = line.strip()
             if line.startswith('pcc-filter-base-name'):
                 if filter_base_dict:
-                    list_of_filter_base.append(filter_base_dict)
+                    list_of_filter_base.update(filter_base_dict)
                 match = re.findall(filter_base_name_pattern, line)
                 if match:
                     filter_base_dict = dict()
-                    filter_base_dict[match[0]] = list()
+                    filter_base_dict[match[0]] = dict()
             if line.startswith('filter'):
                 filter_match = re.findall(filter_name_pattern, line)
                 if filter_match:
                     if filter_base_dict:
                         filter_dict = dict()
-                        filter_base_dict[match[0]].append(
+                        filter_base_dict[match[0]].update(
                             {filter_match[0]: filter_dict}
                         )
             # IPv4 Destination Address
@@ -95,24 +95,24 @@ def parse_filter_base(file_input):
 
 
 def parse_pcc_rule_filter(file_input):
-    list_of_pcc_rule = list()
+    list_of_pcc_rule = dict()
     pcc_rule_dict = None
     with open(file_input) as fin:
         for line in fin:
             line = line.strip()
             if line.startswith('pcc-rule-name'):
                 if pcc_rule_dict:
-                    list_of_pcc_rule.append(pcc_rule_dict)
+                    list_of_pcc_rule.update(pcc_rule_dict)
                 match = re.findall(pcc_rule_name_pattern, line)
                 if match:
                     pcc_rule_dict = dict()
-                    pcc_rule_dict[match[0]] = list()
+                    pcc_rule_dict[match[0]] = dict()
             if line.startswith('filter'):
                 filter_match = re.findall(filter_name_pattern, line)
                 if filter_match:
                     if pcc_rule_dict:
                         filter_dict = dict()
-                        pcc_rule_dict[match[0]].append(
+                        pcc_rule_dict[match[0]].update(
                             {filter_match[0]: filter_dict}
                         )
             # IPv4 Destination Address
@@ -169,7 +169,7 @@ def parse_pcc_rule_filter(file_input):
 def parse_pcc_rule(file_input):
     pcc_rule_name_pattern = r'pcc-rule-name = (.+)'
     pcc_filter_base_pattern = r'pcc-filter-base-name = (.+)'
-    list_of_pcc_rule = list()
+    list_of_pcc_rule = dict()
     pcc_rule_dict = None
     with open(file_input) as fin:
         for line in fin:
@@ -238,8 +238,9 @@ def parse_pcc_rule(file_input):
                 service_id_match = re.findall(service_id_pattern, line)
                 if service_id_match:
                     parameter_dict.update({'service-id': service_id_match[0]})
-                    list_of_pcc_rule.append(pcc_rule_dict)
-        list_of_pcc_rule = sorted(list_of_pcc_rule, key=lambda k: k[list(k.keys())[0]]['precedence'])
+                    list_of_pcc_rule.update(pcc_rule_dict)
+        # list_of_pcc_rule = sorted(list_of_pcc_rule, key=lambda k: k[list(k.keys())[0]]['precedence'])
+        list_of_pcc_rule = OrderedDict(sorted(list_of_pcc_rule.items(), key=lambda x: x[1]['precedence']))
         return list_of_pcc_rule
 
 
@@ -268,10 +269,10 @@ def parse_pcc_rule_base(file_input):
 
 
 def main():
-    fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filter_base'
-    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filters'
-    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule'
-    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule_base'
+    fng_filter_base = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_filter_base'
+    fng_filters = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_filters'
+    pcc_rule = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_policy_rule'
+    pcc_rule_base = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_policy_rule_base'
 
     filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)

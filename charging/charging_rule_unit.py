@@ -14,21 +14,20 @@ def read_yaml_file(file_input):
 def get_charging_rule_unit(policy_rule_yml):
     rg_sid_mk_set = set()
     d = read_yaml_file(policy_rule_yml)
-    list_of_PRs = d.get('PolicyRule')
+    item = d.get('PolicyRule')
 
-    for item in list_of_PRs:
-        for PR in item:
-            mk = item.get(PR).get('monitoring-key')
-            rg = item.get(PR).get('rating-group')
-            sid = item.get(PR).get('service-id')
+    for PR in item:
+        mk = item.get(PR).get('monitoring-key')
+        rg = item.get(PR).get('rating-group')
+        sid = item.get(PR).get('service-id')
 
-            mk_string = 'MK{}'.format(mk) if mk != 'null' else ''
-            rg_string = 'RG{}'.format(rg) if rg != 'null' else ''
-            sid_string = 'SID{}'.format(sid) if sid != 'null' else ''
+        mk_string = 'MK{}'.format(mk) if mk != 'null' else ''
+        rg_string = 'RG{}'.format(rg) if rg != 'null' else ''
+        sid_string = 'SID{}'.format(sid) if sid != 'null' else ''
 
-            final_string = rg_string + sid_string + mk_string
-            if final_string not in rg_sid_mk_set:
-                rg_sid_mk_set.add(final_string)
+        final_string = rg_string + sid_string + mk_string
+        if final_string not in rg_sid_mk_set:
+            rg_sid_mk_set.add(final_string)
 
     rating_group_pattern = r'RG(\d+)'
     service_id_pattern = r'SID(\d+)'
@@ -120,8 +119,8 @@ def create_charging_rule_unit_mop(yaml_cru, yaml_template):
 
 
 yaml_cru = export_yaml(
-    get_charging_rule_unit(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml'))
+    get_charging_rule_unit(r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRule.yaml'))
 yaml_template = os.path.abspath(
-    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
+    r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/templates/charging_rule_unit_commands.yaml')
 
 create_charging_rule_unit_mop(yaml_cru, yaml_template)

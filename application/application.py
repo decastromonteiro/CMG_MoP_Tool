@@ -11,8 +11,7 @@ def get_policy_rule(filter_base_yaml):
     policy_rule_list = list()
     policy_rule_dict_list = read_yaml_file(filter_base_yaml).get('PolicyRule')
     for policy_rule in policy_rule_dict_list:
-        for name in policy_rule:
-            policy_rule_list.append(name)
+        policy_rule_list.append(policy_rule)
 
     return policy_rule_list
 
@@ -47,9 +46,9 @@ def make_application_mop(application_yaml_input, command_yaml_input):
             fout.write(command + '\n')
 
 
-lista = get_policy_rule(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml')
+lista = get_policy_rule(r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRule.yaml')
 
 application_yaml_input = export_application(lista)
 
 make_application_mop(application_yaml_input,
-                     r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\application_commands.yaml')
+                     r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/templates/application_commands.yaml')

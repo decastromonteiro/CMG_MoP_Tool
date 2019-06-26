@@ -16,14 +16,14 @@ def export_yaml(data_input, project_name='HeaderEnrichment'):
 
 def get_header_enrichment_profiles(policy_rule_yaml):
     header_enrichment_type = set()
-    policy_rule_list = read_yaml_file(policy_rule_yaml).get('PolicyRule')
-    for pr_dict in policy_rule_list:
-        for key in pr_dict:
-            he_type = pr_dict.get(key).get('header-enrichment-type')
-            he_type = he_type if he_type != 'null' else None
-            if he_type:
-                if not he_type in header_enrichment_type:
-                    header_enrichment_type.add(he_type)
+    pr_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
+
+    for key in pr_dict:
+        he_type = pr_dict.get(key).get('header-enrichment-type')
+        he_type = he_type if he_type != 'null' else None
+        if he_type:
+            if not he_type in header_enrichment_type:
+                header_enrichment_type.add(he_type)
     return header_enrichment_type
 
 
@@ -43,23 +43,22 @@ def create_he_yaml(header_enrichment_type_set):
 
 def create_header_enrichment_yaml(policy_rule_yaml, header_enrichment_yaml):
     he_template_dicts = read_yaml_file(header_enrichment_yaml).get('HeaderEnrichment')
-    policy_rule_dict_list = read_yaml_file(policy_rule_yaml).get('PolicyRule')
+    pr_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
     reverse_he_dict = dict()
     entry_number = 25000
     http_enrich_dict = dict()
     for he_template in he_template_dicts:
         reverse_he_dict.update({he_template_dicts.get(he_template).get('Description'): he_template})
 
-    for pr_dict in policy_rule_dict_list:
-        for key in pr_dict:
-            header_enrichment_type = pr_dict.get(key).get('header-enrichment-type')
-            he_template = reverse_he_dict.get(header_enrichment_type)
-            if he_template:
-                http_enrich_dict.update(
-                    {key: {'he_template': he_template, 'entry': entry_number, 'application': key}}
+    for key in pr_dict:
+        header_enrichment_type = pr_dict.get(key).get('header-enrichment-type')
+        he_template = reverse_he_dict.get(header_enrichment_type)
+        if he_template:
+            http_enrich_dict.update(
+                {key: {'he_template': he_template, 'entry': entry_number, 'application': key}}
 
-                )
-                entry_number += 1
+            )
+            entry_number += 1
 
     return export_yaml(http_enrich_dict, project_name='HTTPEnrich')
 
@@ -111,14 +110,14 @@ def create_header_enrichment_mop(header_enrichment_yaml, http_enrich_yaml, http_
 def main():
     he_template_path = export_yaml(create_he_yaml(
         get_header_enrichment_profiles(
-            r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml')))
+            r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRule.yaml')))
     http_enrich_path = create_header_enrichment_yaml(
-        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml',
+        r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRule.yaml',
         he_template_path)
 
     mop_path = create_header_enrichment_mop(he_template_path,
                                             http_enrich_path,
-                                            r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\http_enrich.yaml')
+                                            r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/templates/http_enrich.yaml')
 
     print(mop_path)
 
