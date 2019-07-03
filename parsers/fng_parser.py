@@ -269,10 +269,10 @@ def parse_pcc_rule_base(file_input):
 
 
 def main():
-    fng_filter_base = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_filter_base'
-    fng_filters = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_filters'
-    pcc_rule = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_policy_rule'
-    pcc_rule_base = r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/fng_inputs/fng_policy_rule_base'
+    fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filter_base'
+    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filters'
+    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule'
+    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule_base'
 
     filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)
@@ -292,4 +292,24 @@ def main():
     prb.write_to_yaml({'PolicyRuleBase': pcc_rule_bases})
 
 
-main()
+def main_oi():
+    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\Oi\fng_ipa03_filter.txt'
+    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\Oi\fng_ipa03_policy_rule.txt'
+    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\Oi\fng_ipa03_policy_rule_base.txt'
+
+    filters = parse_pcc_rule_filter(fng_filters)
+    pcc_rules = parse_pcc_rule(pcc_rule)
+    pcc_rule_bases = parse_pcc_rule_base(pcc_rule_base)
+
+    f = YAML(project_name="PolicyRuleFilter")
+    f.write_to_yaml({'PolicyRuleFilter': filters})
+
+    pr = YAML(project_name="PolicyRule")
+    pr.write_to_yaml({'PolicyRule': pcc_rules})
+
+    prb = YAML(project_name='PolicyRuleBase')
+    prb.write_to_yaml({'PolicyRuleBase': pcc_rule_bases})
+
+
+if __name__ == "__main__":
+    main()

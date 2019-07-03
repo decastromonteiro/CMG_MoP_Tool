@@ -124,7 +124,7 @@ def make_prefix_list_mop(prefix_yaml_input, command_yaml_input):
 
 
 def make_yaml_from_mop(mop_input):
-    prefix__name_pattern = r'ip-prefix-list (.+) create'
+    prefix_name_pattern = r'ip-prefix-list (.+) create'
     description_pattern = r'description (.+)'
     prefix_pattern = r'prefix (.+) name'
     with open(mop_input) as fin:
@@ -132,7 +132,7 @@ def make_yaml_from_mop(mop_input):
         for line in fin:
             line = line.strip()
             if 'create' in line:
-                prefix_name_match = re.findall(prefix__name_pattern, line)
+                prefix_name_match = re.findall(prefix_name_pattern, line)
                 if prefix_name_match:
                     if not ip_prefix_dict.get(prefix_name_match[0]):
                         ip_prefix_dict.update({prefix_name_match[0]: dict()})
@@ -151,14 +151,25 @@ def make_yaml_from_mop(mop_input):
 
 
 def main():
-    filters = get_filter(r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRuleFilter.yaml')
+    filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRuleFilter.yaml')
     filter_bases = get_filter_base(
-        r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/FilterBase.yaml')
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\FilterBase.yaml')
     filters.update(filter_bases)
     path = export_yaml(filters, project_name='PrePrefixList')
 
     mop_path = make_prefix_list_mop(path,
-                                    r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/templates/prefix_list_commands.yaml')
+                                    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
+
+    make_yaml_from_mop(mop_path)
+
+
+def main_oi():
+    filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml')
+
+    path = export_yaml(filters, project_name='PrePrefixList')
+
+    mop_path = make_prefix_list_mop(path,
+                                    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
 
     make_yaml_from_mop(mop_path)
 

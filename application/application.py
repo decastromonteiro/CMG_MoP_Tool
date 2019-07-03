@@ -46,9 +46,9 @@ def make_application_mop(application_yaml_input, command_yaml_input):
             fout.write(command + '\n')
 
 
-lista = get_policy_rule(r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/parsers/output/PolicyRule.yaml')
+lista = get_policy_rule(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml')
 
 application_yaml_input = export_application(lista)
 
 make_application_mop(application_yaml_input,
-                     r'/home/decastromonteiro/PycharmProjects/CMG_MoP_Tool/templates/application_commands.yaml')
+                     r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\application_commands.yaml')
