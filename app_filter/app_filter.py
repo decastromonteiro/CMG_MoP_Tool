@@ -1,4 +1,3 @@
-import os
 from utils.yaml import YAML
 import re
 
@@ -15,7 +14,57 @@ def export_yaml(data, project_name='AppFilter'):
     return path
 
 
-def create_app_filter_yaml(policy_rule_filter_yaml, filter_base_yaml, prefix_list_yaml, policy_rule_yaml):
+def create_rule_precedence_dict(policy_rule_yaml):
+    # Create Rule:Precedence Dictionary
+    policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
+    rule_precedence_dict = dict()
+    for key in policy_rule_dict:
+        rule_precedence_dict.update({key: policy_rule_dict.get(key).get('precedence')})
+        if policy_rule_dict.get(key).get('pcc-filter-base-name').lower() != 'null':
+            rule_precedence_dict.update(
+                {policy_rule_dict.get(key).get('pcc-filter-base-name'): policy_rule_dict.get(key).get('precedence')})
+
+    return rule_precedence_dict
+
+
+def create_filter_base_rule_dict(policy_rule_yaml):
+    policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
+    filter_base_rule_dict = dict()
+
+    for key in policy_rule_dict:
+        if policy_rule_dict.get(key).get('pcc-filter-base-name') != 'null':
+            filter_base_rule_dict.update({policy_rule_dict.get(key).get('pcc-filter-base-name'): key})
+
+    return filter_base_rule_dict
+
+
+def search_application(app_filter_dict, application, used_key):
+    used_key = used_key if used_key else list()
+    for key in app_filter_dict:
+        if app_filter_dict.get(key).get('application') == application:
+            if key not in used_key:
+                used_key.append(key)
+                return key + 1, used_key
+
+    return None, used_key
+
+
+def calculate_entry_number(entry_number, rule_precedence_dict, application, entries_used):
+    if not entry_number:
+        if int(rule_precedence_dict.get(application)) not in entries_used:
+            entry_number = int(rule_precedence_dict.get(application))
+            return entry_number
+        else:
+            entry_number = sorted(entries_used)[-1] + 1
+            return entry_number
+    elif entry_number in entries_used:
+        entry_number = sorted(entries_used)[-1] + 1
+        return entry_number
+    else:
+        return entry_number
+
+
+def create_app_filter_pre_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml):
     application_pattern = r'(.+)_'
     r'Protocol6Port80,443Domain0000Host0000URI0000'
     protocol_pattern = r'Protocol(.*)Port'
@@ -25,31 +74,25 @@ def create_app_filter_yaml(policy_rule_filter_yaml, filter_base_yaml, prefix_lis
     uri_pattern = r'URI(.*)'
     policy_rule_filter_dict = read_yaml_file(policy_rule_filter_yaml).get('PolicyRuleFilter')
     prefix_list_dict = read_yaml_file(prefix_list_yaml).get('PrefixList')
-    policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
     entry_number = 10
     entries_used = set()
-
-    # Create Rule:Precedence Dictionary
-    rule_precedence_dict = dict()
-    for key in policy_rule_dict:
-        rule_precedence_dict.update({key: policy_rule_dict.get(key).get('precedence')})
-        if policy_rule_dict.get(key).get('pcc-filter-base-name').lower() != 'null':
-            rule_precedence_dict.update(
-                {policy_rule_dict.get(key).get('pcc-filter-base-name'): policy_rule_dict.get(key).get('precedence')})
-
+    rule_precedence_dict = create_rule_precedence_dict(policy_rule_yaml)
+    filter_base_rule_dict = create_filter_base_rule_dict(policy_rule_yaml)
     app_filter_dict = dict()
+    used_key = list()
     for key in prefix_list_dict:
         application = re.findall(application_pattern, key)[0]
-        entry_number = int(rule_precedence_dict.get(application)) if int(
-            rule_precedence_dict.get(application)) not in entries_used else entry_number
-
+        entry_number, used_key = search_application(app_filter_dict, application, used_key)
+        entry_number = calculate_entry_number(entry_number=entry_number,
+                                              rule_precedence_dict=rule_precedence_dict,
+                                              application=application,
+                                              entries_used=entries_used)
         filter_string = list(prefix_list_dict.get(key).keys())[0]
         ip_protocol = re.findall(protocol_pattern, filter_string)[0]
         port = re.findall(port_pattern, filter_string)[0]
         host = re.findall(host_pattern, filter_string)[0]
         domain = re.findall(domain_pattern, filter_string)[0]
         uri = re.findall(uri_pattern, filter_string)[0]
-
         app_filter_dict.update(
             {
                 entry_number: {'ip-protocol-num': ip_protocol,
@@ -58,8 +101,8 @@ def create_app_filter_yaml(policy_rule_filter_yaml, filter_base_yaml, prefix_lis
                                    'http-host': host,
                                    'http-uri': uri
                                },
-                               'server-address': key or domain,
-                               'application': application,
+                               'server-address': key,
+                               'application': filter_base_rule_dict.get(application, application),
                                'protocol': None
                                }
             }
@@ -79,6 +122,12 @@ def create_app_filter_yaml(policy_rule_filter_yaml, filter_base_yaml, prefix_lis
                 protocol = filter_dict.get('l7-uri', '0000') if filter_dict.get('l7-uri', '0000').endswith(
                     ':') else '0000'
                 domain = filter_dict.get('domain-name', '0000')
+                application = key
+                entry_number, used_key = search_application(app_filter_dict, application, used_key)
+                entry_number = calculate_entry_number(entry_number=entry_number,
+                                                      rule_precedence_dict=rule_precedence_dict,
+                                                      application=application,
+                                                      entries_used=entries_used)
                 app_filter_dict.update(
                     {
                         entry_number: {'ip-protocol-num': ip_protocol,
@@ -88,7 +137,7 @@ def create_app_filter_yaml(policy_rule_filter_yaml, filter_base_yaml, prefix_lis
                                            'http-uri': uri
                                        },
                                        'server-address': domain,
-                                       'application': key,
+                                       'application': application,
                                        'protocol': protocol
                                        }
                     }
@@ -101,9 +150,8 @@ def create_app_filter_yaml(policy_rule_filter_yaml, filter_base_yaml, prefix_lis
 
 
 def main():
-    app_filter_dict = create_app_filter_yaml(
+    app_filter_dict = create_app_filter_pre_yaml(
         policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRuleFilter.yaml',
-        filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\FilterBase.yaml',
         prefix_list_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\prefix_list\PrefixList.yaml',
         policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml')
 
