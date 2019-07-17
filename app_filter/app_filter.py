@@ -64,7 +64,7 @@ def calculate_entry_number(entry_number, rule_precedence_dict, application, entr
         return entry_number
 
 
-def create_app_filter_pre_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml):
+def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml):
     application_pattern = r'(.+)_'
     r'Protocol6Port80,443Domain0000Host0000URI0000'
     protocol_pattern = r'Protocol(.*)Port'
@@ -80,6 +80,7 @@ def create_app_filter_pre_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy
     filter_base_rule_dict = create_filter_base_rule_dict(policy_rule_yaml)
     app_filter_dict = dict()
     used_key = list()
+    # app-filter from PREFIX-LISTS
     for key in prefix_list_dict:
         application = re.findall(application_pattern, key)[0]
         entry_number, used_key = search_application(app_filter_dict, application, used_key)
@@ -109,7 +110,7 @@ def create_app_filter_pre_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy
         )
         entries_used.add(entry_number)
         entry_number += 10
-
+    # app-filter from FILTERS
     for key in policy_rule_filter_dict:
         for filter_name in policy_rule_filter_dict.get(key):
             filter_dict = policy_rule_filter_dict.get(key).get(filter_name)
@@ -150,7 +151,7 @@ def create_app_filter_pre_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy
 
 
 def main():
-    app_filter_dict = create_app_filter_pre_yaml(
+    app_filter_dict = create_app_filter_yaml(
         policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRuleFilter.yaml',
         prefix_list_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\prefix_list\PrefixList.yaml',
         policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml')
