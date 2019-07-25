@@ -115,11 +115,9 @@ def main():
         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml',
         he_template_path)
 
-    mop_path = create_header_enrichment_mop(he_template_path,
-                                            http_enrich_path,
-                                            r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\http_enrich.yaml')
-
-    print(mop_path)
+    create_header_enrichment_mop(he_template_path,
+                                 http_enrich_path,
+                                 r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\http_enrich.yaml')
 
 
 if __name__ == "__main__":

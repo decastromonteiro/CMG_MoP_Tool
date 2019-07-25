@@ -247,7 +247,7 @@ def parse_pcc_rule(file_input):
 def parse_pcc_rule_base(file_input):
     pcc_rule_name_pattern = r'pcc-rule-name = (.+?)\s'
     pcc_rule_base_pattern = r'pcc-rule-base-name = (.+)'
-    list_of_pcc_rule_base = list()
+    dict_of_pcc_rule_base = dict()
     pcc_rule_base_dict = None
     with open(file_input) as fin:
         for line in fin:
@@ -263,9 +263,9 @@ def parse_pcc_rule_base(file_input):
                 if pcc_rule_name_match:
                     pcc_rule_base_dict[match[0]].append(pcc_rule_name_match[0])
             if line.startswith('pcc-rule-base-identifier'):
-                list_of_pcc_rule_base.append(pcc_rule_base_dict)
+                dict_of_pcc_rule_base.update(pcc_rule_base_dict)
 
-        return list_of_pcc_rule_base
+        return dict_of_pcc_rule_base
 
 
 def main():

@@ -124,3 +124,6 @@ yaml_template = os.path.abspath(
     r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
 
 create_charging_rule_unit_mop(yaml_cru, yaml_template)
+#
+# create_charging_rule_unit_mop(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\charging\ChargingRuleUnit.yaml',
+#                               yaml_template)

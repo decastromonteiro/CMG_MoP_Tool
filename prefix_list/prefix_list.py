@@ -35,8 +35,7 @@ def aggregate_address(input_dict):
             for filter_name in list_of_filters_dict:
 
                 if list_of_filters_dict.get(filter_name).get('destination-address') or list_of_filters_dict.get(
-                        filter_name).get(
-                    'ipv6-destination-address'):
+                        filter_name).get('ipv6-destination-address'):
                     address = list_of_filters_dict.get(filter_name).get(
                         'destination-address') or list_of_filters_dict.get(
                         filter_name).get(
@@ -93,7 +92,7 @@ def arrange_prefix_lists(prefix_yaml_input):
 def make_prefix_list_mop(prefix_yaml_input, command_yaml_input):
     prefix_dict_list = arrange_prefix_lists(prefix_yaml_input)
 
-    provision_command_list = read_yaml_file(command_yaml_input).get('commands').get('provision')
+    provision_command_dict = read_yaml_file(command_yaml_input).get('commands').get('provision')
 
     command_list = list()
 
@@ -101,15 +100,15 @@ def make_prefix_list_mop(prefix_yaml_input, command_yaml_input):
         lista = prefix_dict_list.get(list_prefix_name)
         command_list.extend([
 
-            provision_command_list.get('create').format(partition='1:1',
+            provision_command_dict.get('create').format(partition='1:1',
                                                         name=list_prefix_name),
-            provision_command_list.get('description').format(partition='1:1',
+            provision_command_dict.get('description').format(partition='1:1',
                                                              name=list_prefix_name,
                                                              description=lista.pop())
 
         ])
         for item in lista:
-            command_list.append(provision_command_list.get('add_prefix').format(
+            command_list.append(provision_command_dict.get('add_prefix').format(
                 partition='1:1',
                 name=list_prefix_name,
                 ip=item if '/' in item else item + '/32',
