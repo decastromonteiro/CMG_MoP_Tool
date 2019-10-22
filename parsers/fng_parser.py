@@ -269,10 +269,10 @@ def parse_pcc_rule_base(file_input):
 
 
 def main():
-    fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filter_base'
-    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_filters'
-    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule'
-    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\input\fng_policy_rule_base'
+    fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_filter_base'
+    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_filters'
+    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_policy_rule'
+    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_policy_rule_base'
 
     filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)

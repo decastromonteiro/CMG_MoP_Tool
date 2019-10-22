@@ -2,6 +2,7 @@ import yaml
 import os
 from collections import OrderedDict
 
+
 class YAML:
 
     def __init__(self, project_name=None):

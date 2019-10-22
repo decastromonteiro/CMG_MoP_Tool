@@ -150,9 +150,9 @@ def make_yaml_from_mop(mop_input):
 
 
 def main():
-    filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRuleFilter.yaml')
+    filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml')
     filter_bases = get_filter_base(
-        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\FilterBase.yaml')
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
     filters.update(filter_bases)
     path = export_yaml(filters, project_name='PrePrefixList')
 
