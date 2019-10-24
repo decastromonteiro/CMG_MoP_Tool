@@ -21,6 +21,8 @@ service_id_pattern = r'service-id = (.+)'
 redirect_uri_pattern = r'redirect-uri = (.+)'
 qos_profile_name_pattern = r'qos-profile-name = (.+)'
 source_address_pattern = r'source-address = (.+)'
+maximum_bit_rate_dl_pattern = r'maximum-bit-rate-dl = (.+)'
+maximum_bit_rate_ul_pattern = r'maximum-bit-rate-ul = (.+)'
 
 
 def parse_filter_base(file_input):
@@ -268,16 +270,41 @@ def parse_pcc_rule_base(file_input):
         return dict_of_pcc_rule_base
 
 
+def parse_qos_profiles(file_input):
+    dict_of_qos_profile = dict()
+    qos_profile_dict = None
+    with open(file_input) as fin:
+        for line in fin:
+            line = line.strip()
+            if line.startswith('qos-profile-name'):
+                match = re.findall(qos_profile_name_pattern, line)
+                if match:
+                    qos_profile_dict = dict()
+                    parameter_dict = dict()
+                    qos_profile_dict[match[0]] = parameter_dict
+            if line.startswith('maximum-bit-rate-dl'):
+                max_bit_rate_dl = re.findall(maximum_bit_rate_dl_pattern, line)
+                if max_bit_rate_dl:
+                    parameter_dict.update({'maximum-bit-rate-dl': max_bit_rate_dl[0]})
+            if line.startswith('maximum-bit-rate-ul'):
+                max_bit_rate_ul = re.findall(maximum_bit_rate_ul_pattern, line)
+                if max_bit_rate_ul:
+                    parameter_dict.update({'maximum-bit-rate-ul': max_bit_rate_ul[0]})
+                    dict_of_qos_profile.update(qos_profile_dict)
+    return dict_of_qos_profile
+
 def main():
     fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_filter_base'
     fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_filters'
     pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_policy_rule'
     pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_policy_rule_base'
+    qos_profile = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_qos'
 
     filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)
     pcc_rules = parse_pcc_rule(pcc_rule)
     pcc_rule_bases = parse_pcc_rule_base(pcc_rule_base)
+    qos_profiles = parse_qos_profiles(qos_profile)
 
     fb = YAML(project_name="FilterBase")
     fb.write_to_yaml({'FilterBase': filter_base})
@@ -290,6 +317,9 @@ def main():
 
     prb = YAML(project_name='PolicyRuleBase')
     prb.write_to_yaml({'PolicyRuleBase': pcc_rule_bases})
+
+    qos = YAML(project_name='QoSProfiles')
+    qos.write_to_yaml({'QoSProfiles': qos_profiles})
 
 
 def main_oi():

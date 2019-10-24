@@ -55,18 +55,18 @@ def calculate_entry_number(entry_number, rule_precedence_dict, application, entr
             entry_number = int(rule_precedence_dict.get(application))
             return entry_number
         else:
-            entry_number = sorted(entries_used)[-1] + 1
+            entry_number = sorted(entries_used)[-1] + 10
             return entry_number
     elif entry_number in entries_used:
-        entry_number = sorted(entries_used)[-1] + 1
+        entry_number = sorted(entries_used)[-1] + 10
         return entry_number
     else:
         return entry_number
 
 
-def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml):
+def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml, filter_base_yaml):
     dns_ip_cache = {}
-    application_pattern = r'(.+)_'
+    application_pattern = r'(.+?)_\d+'
     r'Protocol6Port80,443Domain0000Host0000URI0000'
     protocol_pattern = r'Protocol(.*)Port'
     port_pattern = r'Port(.*)Domain'
@@ -75,12 +75,59 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
     uri_pattern = r'URI(.*)'
     policy_rule_filter_dict = read_yaml_file(policy_rule_filter_yaml).get('PolicyRuleFilter')
     prefix_list_dict = read_yaml_file(prefix_list_yaml).get('PrefixList')
+    filter_base_dict = read_yaml_file(filter_base_yaml).get('FilterBase')
     entry_number = 10
     entries_used = set()
     rule_precedence_dict = create_rule_precedence_dict(policy_rule_yaml)
     filter_base_rule_dict = create_filter_base_rule_dict(policy_rule_yaml)
     app_filter_dict = dict()
     used_key = list()
+
+    # app-filter from FILTER_BASE
+    for key in filter_base_dict:
+        filter_dict = filter_base_dict.get(key)
+        for filter_name in filter_dict:
+            if not (filter_dict.get(filter_name).get('destination-address') or filter_dict.get(filter_name).get(
+                    'ipv6-destination-address') or filter_dict.get(filter_name).get('source-address') or
+                    filter_dict.get(filter_name).get('ipv6-source-address')):
+                ip_protocol = filter_dict.get(filter_name).get('protocol-id')
+
+                port = filter_dict.get(filter_name).get('destination-port-list')
+                host = filter_dict.get(filter_name).get('host-name')
+                uri = filter_dict.get(filter_name).get('l7-uri') if not filter_dict.get(filter_name).get('l7-uri',
+                                                                                                         '0000').endswith(
+                    ':') else None
+                protocol = filter_dict.get(filter_name).get('l7-uri') if filter_dict.get(filter_name).get('l7-uri',
+                                                                                                          '0000').endswith(
+                    ':') else None
+                domain = filter_dict.get(filter_name).get('domain-name')
+                application = key
+                entry_number, used_key = search_application(app_filter_dict, application, used_key)
+                entry_number = calculate_entry_number(entry_number=entry_number,
+                                                      rule_precedence_dict=rule_precedence_dict,
+                                                      application=application,
+                                                      entries_used=entries_used)
+                app_filter_dict.update(
+                    {
+                        entry_number: {'ip-protocol-num': ip_protocol,
+                                       'server-port': port,
+                                       'expression': {
+                                           'http-host': host,
+                                           'http-uri': uri
+                                       },
+                                       'server-address': {
+                                           'ip-prefix-list': None,
+                                           'dns-ip-cache': dns_ip_cache.get(domain),
+                                           'ip-address': None
+                                       },
+                                       'application': application,
+                                       'protocol': protocol
+                                       }
+                    }
+                )
+
+                entries_used.add(entry_number)
+                entry_number += 10
     # app-filter from PREFIX-LISTS
     for key in prefix_list_dict:
         application = re.findall(application_pattern, key)[0]
@@ -119,7 +166,9 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
     for key in policy_rule_filter_dict:
         for filter_name in policy_rule_filter_dict.get(key):
             filter_dict = policy_rule_filter_dict.get(key).get(filter_name)
-            if not (filter_dict.get('destination-address') or filter_dict.get('ipv6-destination-address')):
+            if not (filter_dict.get('destination-address') or filter_dict.get(
+                    'ipv6-destination-address') or filter_dict.get('source-address') or
+                    filter_dict.get('ipv6-source-address')):
                 ip_protocol = filter_dict.get('protocol-id')
                 port = filter_dict.get('destination-port-list')
                 host = filter_dict.get('host-name')
@@ -163,7 +212,8 @@ def main():
     app_filter_dict = create_app_filter_yaml(
         policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
         prefix_list_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\prefix_list\PrefixList.yaml',
-        policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
+        policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
+        filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
 
     export_yaml(app_filter_dict)
 

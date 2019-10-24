@@ -1,5 +1,4 @@
 from utils.yaml import YAML
-import re
 import os
 
 
@@ -33,22 +32,24 @@ def aggregate_address(input_dict):
             aggregate_addresses = dict()
             filter_base_aggregation = dict()
             for filter_name in list_of_filters_dict:
-
                 if list_of_filters_dict.get(filter_name).get('destination-address') or list_of_filters_dict.get(
                         filter_name).get('ipv6-destination-address'):
-                    address = list_of_filters_dict.get(filter_name).get(
-                        'destination-address') or list_of_filters_dict.get(
-                        filter_name).get(
-                        'ipv6-destination-address')
+                    address = None
+                    aggregation_string = None
+                    if list_of_filters_dict.get(filter_name).get('destination-address'):
+                        address = list_of_filters_dict.get(filter_name).get('destination-address')
+                        aggregation_string = 'v4Protocol{}Port{}Domain{}Host{}URI{}'
+                    elif list_of_filters_dict.get(filter_name).get('ipv6-destination-address'):
+                        address = list_of_filters_dict.get(filter_name).get('ipv6-destination-address')
+                        aggregation_string = 'v6Protocol{}Port{}Domain{}Host{}URI{}'
+
                     protocol = list_of_filters_dict.get(filter_name).get('protocol-id', '0000')
                     ports = list_of_filters_dict.get(filter_name).get('destination-port-list', '0000')
                     domain = list_of_filters_dict.get(filter_name).get('domain-name', '0000')
                     host = list_of_filters_dict.get(filter_name).get('host-name', '0000')
                     uri = list_of_filters_dict.get(filter_name).get('l7-uri', '0000')
 
-                    aggregation_string = 'Protocol{}Port{}Domain{}Host{}URI{}'.format(protocol, ports,
-                                                                                      domain, host,
-                                                                                      uri)
+                    aggregation_string = aggregation_string.format(protocol, ports, domain, host, uri)
 
                     if not aggregate_addresses.get(aggregation_string):
                         aggregate_addresses.update({aggregation_string: list()})
@@ -60,9 +61,12 @@ def aggregate_address(input_dict):
         return aggregation_list
 
 
-def arrange_prefix_lists(prefix_yaml_input):
-    prefix_dict = read_yaml_file(prefix_yaml_input).get('PrefixList')
+def chuncks(lista, size):
+    for i in range(0, len(lista), size):
+        yield lista[i:i + size]
 
+
+def make_prefix_list_yaml(prefix_dict):
     arranged_prefix_dict_list = dict()
 
     for policy_rule_name in prefix_dict:
@@ -71,49 +75,50 @@ def arrange_prefix_lists(prefix_yaml_input):
         for prefix_id in prefix_dict_list:
             prefix_name = policy_rule_name + '_{}'.format(count)
             prefix_list = prefix_dict_list.get(prefix_id)
-            if len(prefix_list) <= 256:
-                prefix_list.append(prefix_id)
-                arranged_prefix_dict_list.update({prefix_name: prefix_list})
-            else:
-                ip_left = len(prefix_list) - 256
-                first_prefix = prefix_list[:-ip_left]
-                first_prefix.append(prefix_id)
-                arranged_prefix_dict_list.update({prefix_name: first_prefix})
-                count += 1
-                prefix_name = policy_rule_name + '_{}'.format(count)
-                last_prefix = prefix_list[-ip_left:]
-                last_prefix.append(prefix_id)
-                arranged_prefix_dict_list.update({prefix_name: last_prefix})
-
+            split_lists = chuncks(prefix_list, 256)
+            for lista in split_lists:
+                _count = 1
+                prefix_name = prefix_name + '_{}'.format(_count)
+                arranged_prefix_dict_list.update({prefix_name: {prefix_id: lista}})
+                _count += 1
             count += 1
-    return arranged_prefix_dict_list
+
+    path = export_yaml(arranged_prefix_dict_list, project_name='PrefixList')
+    return path
 
 
 def make_prefix_list_mop(prefix_yaml_input, command_yaml_input):
-    prefix_dict_list = arrange_prefix_lists(prefix_yaml_input)
-
+    prefix_dict_list = read_yaml_file(prefix_yaml_input).get('PrefixList')
     provision_command_dict = read_yaml_file(command_yaml_input).get('commands').get('provision')
-
     command_list = list()
 
     for list_prefix_name in prefix_dict_list:
-        lista = prefix_dict_list.get(list_prefix_name)
-        command_list.extend([
+        prefix_id = prefix_dict_list.get(list_prefix_name)
+        for key, value in prefix_id.items():
+            command_list.extend([
 
-            provision_command_dict.get('create').format(partition='1:1',
-                                                        name=list_prefix_name),
-            provision_command_dict.get('description').format(partition='1:1',
-                                                             name=list_prefix_name,
-                                                             description=lista.pop())
+                provision_command_dict.get('create').format(partition='1:1',
+                                                            name=list_prefix_name),
+                provision_command_dict.get('description').format(partition='1:1',
+                                                                 name=list_prefix_name,
+                                                                 description=key[2:])
 
-        ])
-        for item in lista:
-            command_list.append(provision_command_dict.get('add_prefix').format(
-                partition='1:1',
-                name=list_prefix_name,
-                ip=item if '/' in item else item + '/32',
-                prefix_name=''
-            ))
+            ])
+            for item in value:
+                if key.startswith('v4'):
+                    command_list.append(provision_command_dict.get('add_prefix').format(
+                        partition='1:1',
+                        name=list_prefix_name,
+                        ip=item if '/' in item else item + '/32',
+                        prefix_name=''
+                    ))
+                else:
+                    command_list.append(provision_command_dict.get('add_prefix').format(
+                        partition='1:1',
+                        name=list_prefix_name,
+                        ip=item if '/' in item else item + '/128',
+                        prefix_name=''
+                    ))
 
     with open('mop_ip_prefix.txt', 'w') as fout:
         for command in command_list:
@@ -122,55 +127,15 @@ def make_prefix_list_mop(prefix_yaml_input, command_yaml_input):
     return os.path.abspath('mop_ip_prefix.txt')
 
 
-def make_yaml_from_mop(mop_input):
-    prefix_name_pattern = r'ip-prefix-list (.+) create'
-    description_pattern = r'description (.+)'
-    prefix_pattern = r'prefix (.+) name'
-    with open(mop_input) as fin:
-        ip_prefix_dict = dict()
-        for line in fin:
-            line = line.strip()
-            if 'create' in line:
-                prefix_name_match = re.findall(prefix_name_pattern, line)
-                if prefix_name_match:
-                    if not ip_prefix_dict.get(prefix_name_match[0]):
-                        ip_prefix_dict.update({prefix_name_match[0]: dict()})
-
-            if 'description' in line:
-                description_match = re.findall(description_pattern, line)
-                if description_match:
-                    ip_prefix_dict.get(prefix_name_match[0]).update({description_match[0]: list()})
-
-            if 'prefix' in line:
-                prefix_match = re.findall(prefix_pattern, line)
-                if prefix_match:
-                    ip_prefix_dict.get(prefix_name_match[0]).get(description_match[0]).append(prefix_match[0])
-
-    return export_yaml(ip_prefix_dict)
-
-
 def main():
     filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml')
     filter_bases = get_filter_base(
         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
     filters.update(filter_bases)
-    path = export_yaml(filters, project_name='PrePrefixList')
+    path = make_prefix_list_yaml(filters)
 
-    mop_path = make_prefix_list_mop(path,
-                                    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
-
-    make_yaml_from_mop(mop_path)
-
-
-def main_oi():
-    filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml')
-
-    path = export_yaml(filters, project_name='PrePrefixList')
-
-    mop_path = make_prefix_list_mop(path,
-                                    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
-
-    make_yaml_from_mop(mop_path)
+    make_prefix_list_mop(path,
+                         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
 
 
 if __name__ == "__main__":
