@@ -110,9 +110,9 @@ def create_header_enrichment_mop(header_enrichment_yaml, http_enrich_yaml, http_
 def main():
     he_template_path = export_yaml(create_he_yaml(
         get_header_enrichment_profiles(
-            r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml')))
+            r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')))
     http_enrich_path = create_header_enrichment_yaml(
-        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml',
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
         he_template_path)
 
     create_header_enrichment_mop(he_template_path,

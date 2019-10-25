@@ -59,8 +59,23 @@ def calculate_entry_number(application, entries_application_dict, entries_used, 
         return entry_number, entries_application_dict
 
 
-def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml, filter_base_yaml):
-    dns_ip_cache = {}
+def create_domain_dns_dict(dns_ip_cache_yaml):
+    dns_ip_cache_dict = read_yaml_file(dns_ip_cache_yaml).get('DnsIpCache')
+    domain_dns_ip_cache = dict()
+    for dns_ip_cache in dns_ip_cache_dict:
+        for rule in dns_ip_cache_dict.get(dns_ip_cache):
+            lista = dns_ip_cache_dict.get(dns_ip_cache).get(rule)
+            for domain in lista:
+                if not domain_dns_ip_cache.get(domain):
+                    domain_dns_ip_cache.update(
+                        {domain: dns_ip_cache}
+                    )
+    return domain_dns_ip_cache
+
+
+def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
+                           dns_ip_cache_yaml):
+    dns_ip_cache = create_domain_dns_dict(dns_ip_cache_yaml)
     application_pattern = r'(.+?)_\d+'
     protocol_pattern = r'Protocol(.*)Port'
     port_pattern = r'Port(.*)Domain'
@@ -204,7 +219,9 @@ def main():
         policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
         prefix_list_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\prefix_list\PrefixList.yaml',
         policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
-        filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
+        filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml',
+        dns_ip_cache_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\dns_ip_cache\DnsIpCache.yaml'
+    )
 
     export_yaml(app_filter_dict)
 
