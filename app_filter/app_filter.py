@@ -38,36 +38,30 @@ def create_filter_base_rule_dict(policy_rule_yaml):
     return filter_base_rule_dict
 
 
-def search_application(app_filter_dict, application, used_key):
-    used_key = used_key if used_key else list()
-    for key in app_filter_dict:
-        if app_filter_dict.get(key).get('application') == application:
-            if key not in used_key:
-                used_key.append(key)
-                return key + 1, used_key
-
-    return None, used_key
-
-
-def calculate_entry_number(entry_number, rule_precedence_dict, application, entries_used):
-    if not entry_number:
-        if int(rule_precedence_dict.get(application)) not in entries_used:
-            entry_number = int(rule_precedence_dict.get(application))
-            return entry_number
+def calculate_entry_number(application, entries_application_dict, entries_used, rule_precedence_dict):
+    entry_number = int(rule_precedence_dict.get(application))
+    if entry_number not in entries_used:
+        if not entries_application_dict.get(application):
+            entries_application_dict.update({application: [entry_number]})
         else:
-            entry_number = sorted(entries_used)[-1] + 10
-            return entry_number
-    elif entry_number in entries_used:
-        entry_number = sorted(entries_used)[-1] + 10
-        return entry_number
+            entries_application_dict.get(application).append(entry_number)
+        entries_used.add(entry_number)
+        return entry_number, entries_application_dict
     else:
-        return entry_number
+        if not entries_application_dict.get(application):
+            entry_number = sorted(entries_used)[-1] + 10
+            entries_application_dict.update({application: [entry_number]})
+        else:
+            entry_number = sorted(entries_application_dict.get(application))[-1] + 5
+            entry_number = entry_number if entry_number not in entries_used else sorted(entries_used)[-1] + 10
+            entries_application_dict.get(application).append(entry_number)
+        entries_used.add(entry_number)
+        return entry_number, entries_application_dict
 
 
 def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml, filter_base_yaml):
     dns_ip_cache = {}
     application_pattern = r'(.+?)_\d+'
-    r'Protocol6Port80,443Domain0000Host0000URI0000'
     protocol_pattern = r'Protocol(.*)Port'
     port_pattern = r'Port(.*)Domain'
     domain_pattern = r'Domain(.*)Host'
@@ -76,66 +70,21 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
     policy_rule_filter_dict = read_yaml_file(policy_rule_filter_yaml).get('PolicyRuleFilter')
     prefix_list_dict = read_yaml_file(prefix_list_yaml).get('PrefixList')
     filter_base_dict = read_yaml_file(filter_base_yaml).get('FilterBase')
-    entry_number = 10
+    entries_application_dict = dict()
     entries_used = set()
     rule_precedence_dict = create_rule_precedence_dict(policy_rule_yaml)
     filter_base_rule_dict = create_filter_base_rule_dict(policy_rule_yaml)
     app_filter_dict = dict()
-    used_key = list()
 
-    # app-filter from FILTER_BASE
-    for key in filter_base_dict:
-        filter_dict = filter_base_dict.get(key)
-        for filter_name in filter_dict:
-            if not (filter_dict.get(filter_name).get('destination-address') or filter_dict.get(filter_name).get(
-                    'ipv6-destination-address') or filter_dict.get(filter_name).get('source-address') or
-                    filter_dict.get(filter_name).get('ipv6-source-address')):
-                ip_protocol = filter_dict.get(filter_name).get('protocol-id')
-
-                port = filter_dict.get(filter_name).get('destination-port-list')
-                host = filter_dict.get(filter_name).get('host-name')
-                uri = filter_dict.get(filter_name).get('l7-uri') if not filter_dict.get(filter_name).get('l7-uri',
-                                                                                                         '0000').endswith(
-                    ':') else None
-                protocol = filter_dict.get(filter_name).get('l7-uri') if filter_dict.get(filter_name).get('l7-uri',
-                                                                                                          '0000').endswith(
-                    ':') else None
-                domain = filter_dict.get(filter_name).get('domain-name')
-                application = key
-                entry_number, used_key = search_application(app_filter_dict, application, used_key)
-                entry_number = calculate_entry_number(entry_number=entry_number,
-                                                      rule_precedence_dict=rule_precedence_dict,
-                                                      application=application,
-                                                      entries_used=entries_used)
-                app_filter_dict.update(
-                    {
-                        entry_number: {'ip-protocol-num': ip_protocol,
-                                       'server-port': port,
-                                       'expression': {
-                                           'http-host': host,
-                                           'http-uri': uri
-                                       },
-                                       'server-address': {
-                                           'ip-prefix-list': None,
-                                           'dns-ip-cache': dns_ip_cache.get(domain),
-                                           'ip-address': None
-                                       },
-                                       'application': application,
-                                       'protocol': protocol
-                                       }
-                    }
-                )
-
-                entries_used.add(entry_number)
-                entry_number += 10
     # app-filter from PREFIX-LISTS
     for key in prefix_list_dict:
         application = re.findall(application_pattern, key)[0]
-        entry_number, used_key = search_application(app_filter_dict, application, used_key)
-        entry_number = calculate_entry_number(entry_number=entry_number,
-                                              rule_precedence_dict=rule_precedence_dict,
-                                              application=application,
-                                              entries_used=entries_used)
+
+        entry_number, entries_application_dict = calculate_entry_number(
+            rule_precedence_dict=rule_precedence_dict,
+            application=application,
+            entries_used=entries_used,
+            entries_application_dict=entries_application_dict)
         filter_string = list(prefix_list_dict.get(key).keys())[0]
         ip_protocol = re.findall(protocol_pattern, filter_string)[0]
         port = re.findall(port_pattern, filter_string)[0]
@@ -160,29 +109,31 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
                                }
             }
         )
-        entries_used.add(entry_number)
         entry_number += 10
-    # app-filter from FILTERS
-    for key in policy_rule_filter_dict:
-        for filter_name in policy_rule_filter_dict.get(key):
-            filter_dict = policy_rule_filter_dict.get(key).get(filter_name)
-            if not (filter_dict.get('destination-address') or filter_dict.get(
-                    'ipv6-destination-address') or filter_dict.get('source-address') or
-                    filter_dict.get('ipv6-source-address')):
-                ip_protocol = filter_dict.get('protocol-id')
-                port = filter_dict.get('destination-port-list')
-                host = filter_dict.get('host-name')
-                uri = filter_dict.get('l7-uri') if not filter_dict.get('l7-uri', '0000').endswith(
+    # app-filter from FILTER_BASE
+    for key in filter_base_dict:
+        filter_dict = filter_base_dict.get(key)
+        for filter_name in filter_dict:
+            if not (filter_dict.get(filter_name).get('destination-address') or filter_dict.get(filter_name).get(
+                    'ipv6-destination-address') or filter_dict.get(filter_name).get('source-address') or
+                    filter_dict.get(filter_name).get('ipv6-source-address')):
+                ip_protocol = filter_dict.get(filter_name).get('protocol-id')
+
+                port = filter_dict.get(filter_name).get('destination-port-list')
+                host = filter_dict.get(filter_name).get('host-name')
+                uri = filter_dict.get(filter_name).get('l7-uri') if not filter_dict.get(filter_name).get('l7-uri',
+                                                                                                         '0000').endswith(
                     ':') else None
-                protocol = filter_dict.get('l7-uri') if filter_dict.get('l7-uri', '0000').endswith(
+                protocol = filter_dict.get(filter_name).get('l7-uri') if filter_dict.get(filter_name).get('l7-uri',
+                                                                                                          '0000').endswith(
                     ':') else None
-                domain = filter_dict.get('domain-name')
+                domain = filter_dict.get(filter_name).get('domain-name')
                 application = key
-                entry_number, used_key = search_application(app_filter_dict, application, used_key)
-                entry_number = calculate_entry_number(entry_number=entry_number,
-                                                      rule_precedence_dict=rule_precedence_dict,
-                                                      application=application,
-                                                      entries_used=entries_used)
+                entry_number, entries_application_dict = calculate_entry_number(
+                    rule_precedence_dict=rule_precedence_dict,
+                    application=application,
+                    entries_used=entries_used,
+                    entries_application_dict=entries_application_dict)
                 app_filter_dict.update(
                     {
                         entry_number: {'ip-protocol-num': ip_protocol,
@@ -202,7 +153,47 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
                     }
                 )
 
-                entries_used.add(entry_number)
+                entry_number += 10
+    # app-filter from FILTERS
+    for key in policy_rule_filter_dict:
+        for filter_name in policy_rule_filter_dict.get(key):
+            filter_dict = policy_rule_filter_dict.get(key).get(filter_name)
+            if not (filter_dict.get('destination-address') or filter_dict.get(
+                    'ipv6-destination-address') or filter_dict.get('source-address') or
+                    filter_dict.get('ipv6-source-address')):
+                ip_protocol = filter_dict.get('protocol-id')
+                port = filter_dict.get('destination-port-list')
+                host = filter_dict.get('host-name')
+                uri = filter_dict.get('l7-uri') if not filter_dict.get('l7-uri', '0000').endswith(
+                    ':') else None
+                protocol = filter_dict.get('l7-uri') if filter_dict.get('l7-uri', '0000').endswith(
+                    ':') else None
+                domain = filter_dict.get('domain-name')
+                application = key
+                entry_number, entries_application_dict = calculate_entry_number(
+                    rule_precedence_dict=rule_precedence_dict,
+                    application=application,
+                    entries_used=entries_used,
+                    entries_application_dict=entries_application_dict)
+                app_filter_dict.update(
+                    {
+                        entry_number: {'ip-protocol-num': ip_protocol,
+                                       'server-port': port,
+                                       'expression': {
+                                           'http-host': host,
+                                           'http-uri': uri
+                                       },
+                                       'server-address': {
+                                           'ip-prefix-list': None,
+                                           'dns-ip-cache': dns_ip_cache.get(domain),
+                                           'ip-address': None
+                                       },
+                                       'application': application,
+                                       'protocol': protocol
+                                       }
+                    }
+                )
+
                 entry_number += 10
 
     return app_filter_dict
