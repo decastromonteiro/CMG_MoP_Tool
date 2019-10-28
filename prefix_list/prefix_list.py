@@ -68,18 +68,19 @@ def chuncks(lista, size):
 
 def make_prefix_list_yaml(prefix_dict):
     arranged_prefix_dict_list = dict()
+    prefix_name = '{policy_rule_name}_{prefix_id_count}_{list_count}'
 
     for policy_rule_name in prefix_dict:
         prefix_dict_list = prefix_dict.get(policy_rule_name)
         count = 1
         for prefix_id in prefix_dict_list:
-            prefix_name = policy_rule_name + '_{}'.format(count)
             prefix_list = prefix_dict_list.get(prefix_id)
             split_lists = chuncks(prefix_list, 256)
+            _count = 1
             for lista in split_lists:
-                _count = 1
-                prefix_name = prefix_name + '_{}'.format(_count)
-                arranged_prefix_dict_list.update({prefix_name: {prefix_id: lista}})
+                arranged_prefix_dict_list.update({prefix_name.format(
+                    policy_rule_name=policy_rule_name, prefix_id_count=count, list_count=_count
+                ): {prefix_id: lista}})
                 _count += 1
             count += 1
 
@@ -131,7 +132,8 @@ def main():
     filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml')
     filter_bases = get_filter_base(
         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
-    filters.update(filter_bases)
+    if filter_bases:
+        filters.update(filter_bases)
     path = make_prefix_list_yaml(filters)
 
     make_prefix_list_mop(path,

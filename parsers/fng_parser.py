@@ -323,13 +323,20 @@ def main():
 
 
 def main_oi():
-    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\Oi\fng_ipa03_filter.txt'
-    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\Oi\fng_ipa03_policy_rule.txt'
-    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\Oi\fng_ipa03_policy_rule_base.txt'
+    fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input_oi\fng_filter_base'
+    fng_filters = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input_oi\fng_filters'
+    pcc_rule = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input_oi\fng_policy_rule'
+    pcc_rule_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input_oi\fng_policy_rule_base'
+    qos_profile = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input_oi\fng_qos'
 
+    filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)
     pcc_rules = parse_pcc_rule(pcc_rule)
     pcc_rule_bases = parse_pcc_rule_base(pcc_rule_base)
+    qos_profiles = parse_qos_profiles(qos_profile)
+
+    fb = YAML(project_name="FilterBase")
+    fb.write_to_yaml({'FilterBase': filter_base})
 
     f = YAML(project_name="PolicyRuleFilter")
     f.write_to_yaml({'PolicyRuleFilter': filters})
@@ -340,6 +347,9 @@ def main_oi():
     prb = YAML(project_name='PolicyRuleBase')
     prb.write_to_yaml({'PolicyRuleBase': pcc_rule_bases})
 
+    qos = YAML(project_name='QoSProfiles')
+    qos.write_to_yaml({'QoSProfiles': qos_profiles})
+
 
 if __name__ == "__main__":
-    main()
+    main_oi()

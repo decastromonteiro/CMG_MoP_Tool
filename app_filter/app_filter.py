@@ -39,7 +39,7 @@ def create_filter_base_rule_dict(policy_rule_yaml):
 
 
 def calculate_entry_number(application, entries_application_dict, entries_used, rule_precedence_dict):
-    entry_number = int(rule_precedence_dict.get(application))
+    entry_number = int(rule_precedence_dict.get(application)) if rule_precedence_dict.get(application) else 10
     if entry_number not in entries_used:
         if not entries_application_dict.get(application):
             entries_application_dict.update({application: [entry_number]})
@@ -63,8 +63,8 @@ def create_domain_dns_dict(dns_ip_cache_yaml):
     dns_ip_cache_dict = read_yaml_file(dns_ip_cache_yaml).get('DnsIpCache')
     domain_dns_ip_cache = dict()
     for dns_ip_cache in dns_ip_cache_dict:
-        for rule in dns_ip_cache_dict.get(dns_ip_cache):
-            lista = dns_ip_cache_dict.get(dns_ip_cache).get(rule)
+        for rule in dns_ip_cache_dict.get(dns_ip_cache).get('domains'):
+            lista = dns_ip_cache_dict.get(dns_ip_cache).get('domains').get(rule)
             for domain in lista:
                 if not domain_dns_ip_cache.get(domain):
                     domain_dns_ip_cache.update(
@@ -76,7 +76,7 @@ def create_domain_dns_dict(dns_ip_cache_yaml):
 def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                            dns_ip_cache_yaml):
     dns_ip_cache = create_domain_dns_dict(dns_ip_cache_yaml)
-    application_pattern = r'(.+?)_\d+'
+    application_pattern = r'(.*)_\d+_\d+'
     protocol_pattern = r'Protocol(.*)Port'
     port_pattern = r'Port(.*)Domain'
     domain_pattern = r'Domain(.*)Host'
@@ -119,7 +119,7 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
                                    'dns-ip-cache': dns_ip_cache.get(domain),
                                    'ip-address': None
                                },
-                               'application': filter_base_rule_dict.get(application, application),
+                               'application': application,
                                'protocol': None
                                }
             }

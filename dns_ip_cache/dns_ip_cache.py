@@ -25,13 +25,13 @@ def create_dns_yaml(policy_rule_filter_yaml, policy_rule_yaml, filter_base_yaml)
         for filter_name in filter_dict:
             domain = filter_dict.get(filter_name).get('domain-name')
             if domain:
-                if not policy_rule_domain_dict.get(filter_base_rule_dict.get(key)):
+                if not policy_rule_domain_dict.get(key):
                     policy_rule_domain_dict.update(
-                        {filter_base_rule_dict.get(key): [domain]}
+                        {key: [domain]}
                     )
                 else:
-                    if domain not in policy_rule_domain_dict.get(filter_base_rule_dict.get(key)):
-                        policy_rule_domain_dict.get(filter_base_rule_dict.get(key)).append(
+                    if domain not in policy_rule_domain_dict.get(key):
+                        policy_rule_domain_dict.get(key).append(
                             domain
                         )
     for key in policy_rule_filter_dict:
@@ -48,15 +48,55 @@ def create_dns_yaml(policy_rule_filter_yaml, policy_rule_yaml, filter_base_yaml)
                         policy_rule_domain_dict.get(key).append(
                             domain
                         )
-    export_yaml({'DefaultLayer3Layer7': policy_rule_domain_dict})
+    return export_yaml({'DefaultLayer3Layer7': {'ip-cache-size': 64000, 'domains': policy_rule_domain_dict}})
 
+
+def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
+    dns_ip_cache_dict = read_yaml_file(dns_entries_yaml).get('DnsIpCache')
+    provision_commands = read_yaml_file(dns_commands_yaml).get('commands').get('provision')
+    commands_list = list()
+    used_domains = set()
+    for dns_ip_cache in dns_ip_cache_dict:
+        ip_cache_size = dns_ip_cache_dict.get(dns_ip_cache).get('ip-cache-size')
+        rule_domain = dns_ip_cache_dict.get(dns_ip_cache).get('domains')
+        commands_list.append(
+            provision_commands.get('create').format(name=dns_ip_cache)
+        )
+        commands_list.append(provision_commands.get('ip-cache-size').format(name=dns_ip_cache,
+                                                                            ip_cache_size=ip_cache_size)
+                             )
+        for rule in rule_domain:
+            domain_list = rule_domain.get(rule)
+            count = 1
+            for domain in domain_list:
+                if domain not in used_domains:
+                    used_domains.add(domain)
+                    if not domain.startswith('*'):
+                        domain = '^' + domain
+                    if not domain.endswith('*'):
+                        domain = domain + '$'
+
+                    commands_list.append(provision_commands.get('add_domain').format(
+                        name=dns_ip_cache, pr_name=rule + '_{}'.format(count), domain_name=domain
+                    ))
+                count += 1
+        commands_list.append(provision_commands.get('no_shutdown').format(
+            name=dns_ip_cache
+        ))
+
+    with open('mop_dns_ip_cache.txt', 'w') as fout:
+        for command in commands_list:
+            fout.write(command)
+            fout.write('\n')
 
 
 def main():
-    create_dns_yaml(
+    path = create_dns_yaml(
         policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
         policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
         filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
+
+    create_dns_mop(path, r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\dns_ip_cache_commands.yaml')
 
 
 if __name__ == '__main__':
