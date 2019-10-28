@@ -2,13 +2,16 @@ name: App-Filter Commands
 commands:
   provision:
     begin: '/configure application-assurance group {partition} policy begin'
-    entry: '/configure application-assurance group {partition} policy app-filter entry {entry} create'
+    create: '/configure application-assurance group {partition} policy app-filter entry {entry} create'
     description: '/configure application-assurance group {partition} policy app-filter entry {entry} description "policy-rule {pr_name}"'
     application: '/configure application-assurance group {partition} policy app-filter entry {entry} application {application}'
-    server_address: '/configure application-assurance group {partition} policy app-filter entry {entry} server-address {l3_filter}'
+    server_address: '/configure application-assurance group {partition} policy app-filter entry {entry} server-address {server_address}'
+    ip-prefix: '/configure application-assurance group {partition} policy app-filter entry {entry} server-address eq ip-prefix-list {prefix_name}'
+    dns-ip-cache: '/configure application-assurance group {partition} policy app-filter entry {entry} server-address eq dns-ip-cache {dns_ip_cache}'
     ip_protocol: '/configure application-assurance group {partition} policy app-filter entry {entry} ip-protocol-num eq {ip_protocol}'
-    server_port: '/configure application-assurance group {partition} policy app-filter entry {entry} server-port {port_filter}'
-    expression: '/configure application-assurance group {partition} policy app-filter entry {entry} expression {count} {l7_expression}'
+    server_port: '/configure application-assurance group {partition} policy app-filter entry {entry} server-port eq {port_filter}'
+    http-host: '/configure application-assurance group {partition} policy app-filter entry {entry} expression 1 http-host eq {http_host}'
+    http-uri: '/configure application-assurance group {partition} policy app-filter entry {entry} expression 2 http-uri eq {http_uri}'
     no_shutdown: '/configure application-assurance group {partition} policy app-filter entry {entry} no shutdown'
     commit: '/configure application-assurance group {partition} policy commit'
   rollback:

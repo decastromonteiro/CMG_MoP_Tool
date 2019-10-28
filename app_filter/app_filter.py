@@ -211,11 +211,95 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
 
                 entry_number += 10
 
-    return app_filter_dict
+    return export_yaml(app_filter_dict)
+
+
+def create_app_filter_mop(app_filter_yaml, app_filter_commands):
+    app_filter_dict = read_yaml_file(app_filter_yaml).get('AppFilter')
+    provision_commands = read_yaml_file(app_filter_commands).get('commands').get('provision')
+    list_of_commands = list()
+    list_of_commands.append(
+        provision_commands.get('begin').format(partition='1:1')
+    )
+    for entry in app_filter_dict:
+        list_of_commands.extend([
+            provision_commands.get('create').format(partition='1:1', entry=entry),
+            provision_commands.get('description').format(partition='1:1', entry=entry,
+                                                         pr_name=app_filter_dict.get(entry).get('application')),
+            provision_commands.get('application').format(partition='1:1', entry=entry,
+                                                         application=app_filter_dict.get(entry).get('application'))
+        ])
+
+        if app_filter_dict.get(entry).get('server-address').get('dns-ip-cache'):
+            list_of_commands.append(
+                provision_commands.get('dns-ip-cache').format(partition='1:1', entry=entry,
+                                                              dns_ip_cache=app_filter_dict.get(entry).get(
+                                                                  'server-address').get('dns-ip-cache'))
+            )
+        elif app_filter_dict.get(entry).get('server-address').get('ip-address'):
+            list_of_commands.append(
+                provision_commands.get('ip-address').format(partition='1:1', entry=entry,
+                                                            server_address=app_filter_dict.get(entry).get(
+                                                                'server-address').get('ip-address'))
+            )
+
+        elif app_filter_dict.get(entry).get('server-address').get('ip-prefix-list'):
+            list_of_commands.append(
+                provision_commands.get('ip-prefix').format(partition='1:1', entry=entry,
+                                                           prefix_name=app_filter_dict.get(entry).get(
+                                                               'server-address').get('ip-prefix-list'))
+            )
+
+        if app_filter_dict.get(entry).get('ip-protocol-num') != '0':
+            list_of_commands.append(
+                provision_commands.get('ip_protocol').format(partition='1:1', entry=entry,
+                                                             ip_protocol=app_filter_dict.get(entry).get(
+                                                                 'ip-protocol-num'))
+            )
+
+        if app_filter_dict.get(entry).get('server-port'):
+            list_of_commands.append(
+                provision_commands.get('server_port').format(partition='1:1', entry=entry,
+                                                             port_filter=app_filter_dict.get(entry).get(
+                                                                 'server-port'))
+            )
+        if app_filter_dict.get(entry).get('expression').get('http-host'):
+            host = app_filter_dict.get(entry).get('expression').get('http-host')
+            if not host.startswith('*'):
+                host = '^' + host
+            if not host.endswith('*'):
+                host = host + '$'
+            list_of_commands.append(
+                provision_commands.get('http-host').format(partition='1:1', entry=entry,
+                                                           http_host=host)
+            )
+        if app_filter_dict.get(entry).get('expression').get('http-uri'):
+            uri = app_filter_dict.get(entry).get('expression').get('http-uri')
+            if not uri.startswith('*'):
+                uri = '^' + uri
+            if not uri.endswith('*'):
+                uri = uri + '$'
+            list_of_commands.append(
+                provision_commands.get('http-uri').format(partition='1:1', entry=entry,
+                                                          http_uri=uri)
+            )
+
+        list_of_commands.append(
+            provision_commands.get('no_shutdown').format(partition='1:1', entry=entry)
+        )
+
+    list_of_commands.append(
+        provision_commands.get('commit').format(partition='1:1')
+    )
+
+    with open('mop_app_filter.txt', 'w') as fout:
+        for command in list_of_commands:
+            fout.write(command)
+            fout.write('\n')
 
 
 def main():
-    app_filter_dict = create_app_filter_yaml(
+    path = create_app_filter_yaml(
         policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
         prefix_list_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\prefix_list\PrefixList.yaml',
         policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
@@ -223,7 +307,7 @@ def main():
         dns_ip_cache_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\dns_ip_cache\DnsIpCache.yaml'
     )
 
-    export_yaml(app_filter_dict)
+    create_app_filter_mop(path, r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\app_filter.yaml')
 
 
 if __name__ == "__main__":
