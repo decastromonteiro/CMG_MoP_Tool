@@ -19,7 +19,12 @@ def get_policy_rule(policy_rule_yaml):
     policy_rule_list = list()
     policy_rule_dict_list = read_yaml_file(policy_rule_yaml).get('PolicyRule')
     for policy_rule in policy_rule_dict_list:
-        policy_rule_list.append(policy_rule)
+        fb = policy_rule_dict_list.get(policy_rule).get('pcc-filter-base-name')
+        if not fb or fb == 'null':
+            policy_rule_list.append(policy_rule)
+        else:
+            if fb not in policy_rule_list:
+                policy_rule_list.append(fb)
 
     return policy_rule_list
 

@@ -66,7 +66,16 @@ def chuncks(lista, size):
         yield lista[i:i + size]
 
 
-def create_prefix_list_yaml(prefix_dict):
+def create_prefix_list_yaml(policy_rule_filter_yaml, filter_base_yaml):
+    filters = get_filter(policy_rule_filter_yaml)
+    filter_bases = get_filter_base(filter_base_yaml)
+    if filters and filter_bases:
+        filters.update(filter_bases)
+        prefix_dict = filters
+    elif filters:
+        prefix_dict = filters
+    else:
+        prefix_dict = filter_bases
     arranged_prefix_dict_list = dict()
     prefix_name = '{policy_rule_name}_{prefix_id_count}_{list_count}'
 
@@ -129,15 +138,11 @@ def create_prefix_list_mop(prefix_yaml_input, command_yaml_input):
 
 
 def main():
-    filters = get_filter(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml')
-    filter_bases = get_filter_base(
-        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
-    if filter_bases:
-        filters.update(filter_bases)
-    path = create_prefix_list_yaml(filters)
+    path = create_prefix_list_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
+                                   r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
 
     create_prefix_list_mop(path,
-                         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
+                           r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\prefix_list_commands.yaml')
 
 
 if __name__ == "__main__":

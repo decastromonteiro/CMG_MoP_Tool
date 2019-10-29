@@ -100,7 +100,6 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
     entries_application_dict = dict()
     entries_used = set()
     rule_precedence_dict = create_rule_precedence_dict(policy_rule_yaml)
-    filter_base_rule_dict = create_filter_base_rule_dict(policy_rule_yaml)
     port_list_dict = create_port_list_dict(server_port_yaml)
     app_filter_dict = dict()
 
