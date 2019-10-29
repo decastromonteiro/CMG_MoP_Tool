@@ -40,12 +40,15 @@ def create_charging_rule_to_pr(policy_rule_yaml):
 
 
 def create_policy_rule_unit_yaml(policy_rule_yaml):
+    flow_gate_status_dict = {'charge-v': 'allow', 'pass': 'allow', 'drop': 'drop', 'deny': 'drop'}
     policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
     policy_rule_unit_dict = dict()
 
     for key in policy_rule_dict:
+        flow_gate_status = policy_rule_dict.get(key).get('pcc-rule-action')
         policy_rule_unit_dict.update(
-            {key + '_PRU': {'aa-charging-group': key}
+            {key + '_PRU': {'aa-charging-group': key,
+                            'flow-gate-status': flow_gate_status_dict.get(flow_gate_status, flow_gate_status)}
              }
         )
 
@@ -85,7 +88,9 @@ def create_policy_rule_unit_mop(policy_rule_unit_yaml, policy_rule_commands_temp
         pr_base_commands.append(provision_command_dict.get('rule_unit').format(
             policy_rule_unit=key, charging_group=pru_dict.get(key).get('aa-charging-group')
         ))
-
+        pr_base_commands.append(provision_command_dict.get('flow-gate-status').format(
+            policy_rule_unit=key, flow_gate_status=pru_dict.get(key).get('flow-gate-status')
+        ))
     pr_base_commands.append(provision_command_dict.get('commit'))
 
     with open('mop_policy_rule_unit.txt', 'w') as fout:
