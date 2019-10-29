@@ -1,3 +1,5 @@
+import os
+
 from utils.yaml import YAML
 from app_filter.app_filter import create_filter_base_rule_dict
 
@@ -88,6 +90,8 @@ def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
         for command in commands_list:
             fout.write(command)
             fout.write('\n')
+
+    return os.path.abspath('mop_dns_ip_cache.txt')
 
 
 def main():

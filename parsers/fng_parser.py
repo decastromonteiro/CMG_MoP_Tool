@@ -1,6 +1,7 @@
 import re
 from collections import OrderedDict
 from utils.yaml import YAML
+from utils.rule_convertion import convertion_dict
 
 filter_base_name_pattern = r'pcc-filter-base-name : (.+)'
 filter_name_pattern = r'filter = (.+)'
@@ -108,13 +109,13 @@ def parse_pcc_rule_filter(file_input):
                 match = re.findall(pcc_rule_name_pattern, line)
                 if match:
                     pcc_rule_dict = dict()
-                    pcc_rule_dict[match[0]] = dict()
+                    pcc_rule_dict[convertion_dict.get(match[0], match[0])] = dict()
             if line.startswith('filter'):
                 filter_match = re.findall(filter_name_pattern, line)
                 if filter_match:
                     if pcc_rule_dict:
                         filter_dict = dict()
-                        pcc_rule_dict[match[0]].update(
+                        pcc_rule_dict[convertion_dict.get(match[0], match[0])].update(
                             {filter_match[0]: filter_dict}
                         )
             # IPv4 Destination Address
@@ -181,7 +182,7 @@ def parse_pcc_rule(file_input):
                 if match:
                     pcc_rule_dict = dict()
                     parameter_dict = dict()
-                    pcc_rule_dict[match[0]] = parameter_dict
+                    pcc_rule_dict[convertion_dict.get(match[0], match[0])] = parameter_dict
             if line.startswith('precedence'):
                 precedence_match = re.findall(precedence_pattern, line)
                 if precedence_match:
@@ -263,7 +264,8 @@ def parse_pcc_rule_base(file_input):
             if line.startswith('pcc-rule-name'):
                 pcc_rule_name_match = re.findall(pcc_rule_name_pattern, line)
                 if pcc_rule_name_match:
-                    pcc_rule_base_dict[match[0]].append(pcc_rule_name_match[0])
+                    pcc_rule_base_dict[match[0]].append(
+                        convertion_dict.get(pcc_rule_name_match[0], pcc_rule_name_match[0]))
             if line.startswith('pcc-rule-base-identifier'):
                 dict_of_pcc_rule_base.update(pcc_rule_base_dict)
 
@@ -292,6 +294,7 @@ def parse_qos_profiles(file_input):
                     parameter_dict.update({'maximum-bit-rate-ul': max_bit_rate_ul[0]})
                     dict_of_qos_profile.update(qos_profile_dict)
     return dict_of_qos_profile
+
 
 def main():
     fng_filter_base = r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\input\fng_filter_base'

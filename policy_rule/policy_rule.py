@@ -1,3 +1,5 @@
+import os
+
 from utils.yaml import YAML
 import re
 
@@ -86,10 +88,11 @@ def create_policy_rule_unit_mop(policy_rule_unit_yaml, policy_rule_commands_temp
 
     pr_base_commands.append(provision_command_dict.get('commit'))
 
-    with open('policy_rule_unit.mop', 'w') as fout:
+    with open('mop_policy_rule_unit.txt', 'w') as fout:
         for command in pr_base_commands:
             fout.write(command)
             fout.write('\n')
+    return os.path.abspath('mop_policy_rule_unit.txt')
 
 
 def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
@@ -113,10 +116,12 @@ def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
         )
     pr_base_commands.append(provision_command_dict.get('commit'))
 
-    with open('policy_rule.mop', 'w') as fout:
+    with open('mop_policy_rule.txt', 'w') as fout:
         for command in pr_base_commands:
             fout.write(command)
             fout.write('\n')
+
+    return os.path.abspath('mop_policy_rule.txt')
 
 
 def create_policy_rule_base_mop(policy_rule_base_yaml, policy_rule_commands_template):
@@ -133,21 +138,23 @@ def create_policy_rule_base_mop(policy_rule_base_yaml, policy_rule_commands_temp
 
     pr_base_commands.append(provision_command_dict.get('commit'))
 
-    with open('policy_rule_base.mop', 'w') as fout:
+    with open('mop_policy_rule_base.txt', 'w') as fout:
         for command in pr_base_commands:
             fout.write(command)
             fout.write('\n')
 
+    return os.path.abspath('mop_policy_rule_base.txt')
+
 
 def main():
     pru_yaml = create_policy_rule_unit_yaml(
-        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml'
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml'
     )
 
-    pr_yaml = create_policy_rule_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml',
+    pr_yaml = create_policy_rule_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
                                       pru_yaml)
 
-    create_policy_rule_base_mop(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRuleBase.yaml',
+    create_policy_rule_base_mop(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleBase.yaml',
                                 r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\policy_rule_commands.yaml')
 
     create_policy_rule_unit_mop(pru_yaml,

@@ -1,3 +1,5 @@
+import os
+
 from utils.yaml import YAML
 
 
@@ -7,22 +9,26 @@ def read_yaml_file(file_input):
     return d
 
 
-def get_policy_rule(filter_base_yaml):
+def export_yaml(data, project_name='Application'):
+    wy = YAML(project_name=project_name)
+    path = wy.write_to_yaml({'Application': data})
+    return path
+
+
+def get_policy_rule(policy_rule_yaml):
     policy_rule_list = list()
-    policy_rule_dict_list = read_yaml_file(filter_base_yaml).get('PolicyRule')
+    policy_rule_dict_list = read_yaml_file(policy_rule_yaml).get('PolicyRule')
     for policy_rule in policy_rule_dict_list:
         policy_rule_list.append(policy_rule)
 
     return policy_rule_list
 
 
-def export_application(lista, project_name='Application'):
-    wy = YAML(project_name=project_name)
-    path = wy.write_to_yaml({project_name: lista})
-    return path
+def create_application_yaml(policy_rule_yaml):
+    return export_yaml(get_policy_rule(policy_rule_yaml))
 
 
-def make_application_mop(application_yaml_input, command_yaml_input):
+def create_application_mop(application_yaml_input, command_yaml_input):
     application_list = read_yaml_file(application_yaml_input).get('Application')
     list_of_commands = list()
 
@@ -45,10 +51,15 @@ def make_application_mop(application_yaml_input, command_yaml_input):
         for command in list_of_commands:
             fout.write(command + '\n')
 
+    return os.path.abspath('mop_application.txt')
 
-lista = get_policy_rule(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\output\PolicyRule.yaml')
 
-application_yaml_input = export_application(lista)
+def main():
+    path = create_application_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
 
-make_application_mop(application_yaml_input,
-                     r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\application_commands.yaml')
+    create_application_mop(path,
+                           r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\application_commands.yaml')
+
+
+if __name__ == "__main__":
+    main()

@@ -56,6 +56,10 @@ def export_yaml(lista, project_name='ChargingRuleUnit'):
     return path
 
 
+def create_charging_rule_unit_yaml(policy_rule_yaml):
+    return export_yaml(get_charging_rule_unit(policy_rule_yaml))
+
+
 def create_charging_rule_unit_mop(yaml_cru, yaml_template):
     """
     Create a Method of Procedure for the ChargingRuleUnits specified in the yaml_cru file
@@ -118,12 +122,13 @@ def create_charging_rule_unit_mop(yaml_cru, yaml_template):
     return os.path.abspath('charging_rule_unit_mop.txt')
 
 
-yaml_cru = export_yaml(
-    get_charging_rule_unit(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml'))
-yaml_template = os.path.abspath(
-    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
+def main():
+    yaml_cru = create_charging_rule_unit_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
+    yaml_template = os.path.abspath(
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
 
-create_charging_rule_unit_mop(yaml_cru, yaml_template)
-#
-# create_charging_rule_unit_mop(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\charging\ChargingRuleUnit.yaml',
-#                               yaml_template)
+    create_charging_rule_unit_mop(yaml_cru, yaml_template)
+
+
+if __name__ == "__main__":
+    main()
