@@ -13,6 +13,7 @@ commands:
     server-port: '/configure application-assurance group {partition} policy app-filter entry {entry} server-port eq {port}'
     http-host: '/configure application-assurance group {partition} policy app-filter entry {entry} expression 1 http-host eq {http_host}'
     http-uri: '/configure application-assurance group {partition} policy app-filter entry {entry} expression 2 http-uri eq {http_uri}'
+    protocol: '/configure application-assurance group {partition} policy app-filter entry {entry} protocol eq {protocol}'
     no_shutdown: '/configure application-assurance group {partition} policy app-filter entry {entry} no shutdown'
     commit: '/configure application-assurance group {partition} policy commit'
   rollback:

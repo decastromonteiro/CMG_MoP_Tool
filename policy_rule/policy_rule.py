@@ -1,5 +1,5 @@
 import os
-from app_filter.app_filter import create_filter_base_rule_dict
+from charging.charging_rule_unit import create_cru_string
 from utils.yaml import YAML
 import re
 
@@ -22,15 +22,7 @@ def create_pr_to_charging_rule(policy_rule_yaml):
     output_dict = dict()
 
     for key in policy_rule_dict:
-        mk = policy_rule_dict.get(key).get('monitoring-key')
-        rg = policy_rule_dict.get(key).get('rating-group')
-        sid = policy_rule_dict.get(key).get('service-id')
-
-        mk_string = 'MK{}'.format(mk) if mk != 'null' else ''
-        rg_string = 'RG{}'.format(rg) if rg != 'null' else ''
-        sid_string = 'SID{}'.format(sid) if sid != 'null' else ''
-
-        final_string = rg_string + sid_string + mk_string
+        final_string = create_cru_string(policy_rule_dict.get(key))
 
         output_dict.update(
             {key: final_string}
@@ -164,8 +156,7 @@ def main():
         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml'
     )
 
-    pr_yaml = create_policy_rule_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
-                                      pru_yaml)
+    pr_yaml = create_policy_rule_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
 
     create_policy_rule_base_mop(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleBase.yaml',
                                 r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\policy_rule_commands.yaml')

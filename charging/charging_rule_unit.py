@@ -11,21 +11,25 @@ def read_yaml_file(file_input):
     return d
 
 
+def create_cru_string(policy_rule_dict):
+    mk = policy_rule_dict.get('monitoring-key')
+    rg = policy_rule_dict.get('rating-group')
+    sid = policy_rule_dict.get('service-id')
+
+    mk_string = 'MK{:03}'.format(int(mk)) if mk != 'null' else ''
+    rg_string = 'RG{:03}'.format(int(rg)) if rg != 'null' else ''
+    sid_string = 'SID{:03}'.format(int(sid)) if sid != 'null' else ''
+
+    final_string = rg_string + sid_string + mk_string
+    return final_string
+
+
 def get_charging_rule_unit(policy_rule_yml):
     rg_sid_mk_set = set()
     d = read_yaml_file(policy_rule_yml)
     item = d.get('PolicyRule')
-
     for PR in item:
-        mk = item.get(PR).get('monitoring-key')
-        rg = item.get(PR).get('rating-group')
-        sid = item.get(PR).get('service-id')
-
-        mk_string = 'MK{:03}'.format(int(mk)) if mk != 'null' else ''
-        rg_string = 'RG{:03}'.format(int(rg)) if rg != 'null' else ''
-        sid_string = 'SID{:03}'.format(int(sid)) if sid != 'null' else ''
-
-        final_string = rg_string + sid_string + mk_string
+        final_string = create_cru_string(item.get(PR))
         if final_string not in rg_sid_mk_set:
             rg_sid_mk_set.add(final_string)
 

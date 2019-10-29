@@ -352,6 +352,11 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
             provision_commands.get('no_shutdown').format(partition='1:1', entry=entry)
         )
 
+        if app_filter_dict.get(entry).get('protocol'):
+            list_of_commands.append(
+                provision_commands.get('protocol').format(partition='1:1', entry=entry,
+                                                          protocol=app_filter_dict.get(entry).get('protocol'))
+            )
     list_of_commands.append(
         provision_commands.get('commit').format(partition='1:1')
     )
