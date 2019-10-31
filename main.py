@@ -9,6 +9,7 @@ from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_
     create_policy_rule_mop, create_policy_rule_base_mop, create_policy_rule_base_yaml
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
+
 import argparse
 import os
 
@@ -40,7 +41,7 @@ def create_yaml_from_fng(fng_inputs_dir):
 
     filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)
-    pcc_rules = parse_pcc_rule(pcc_rule)
+    pcc_rules = parse_pcc_rule(pcc_rule, filters)
     pcc_rule_bases = parse_pcc_rule_base(pcc_rule_base)
     qos_profiles = parse_qos_profiles(qos_profile)
 
@@ -51,9 +52,6 @@ def create_yaml_from_fng(fng_inputs_dir):
 
     fb = YAML(project_name="FilterBase")
     filter_base_path = fb.write_to_yaml({'FilterBase': filter_base})
-
-    f = YAML(project_name="PolicyRuleFilter")
-    filter_path = f.write_to_yaml({'PolicyRuleFilter': filters})
 
     pr = YAML(project_name="PolicyRule")
     pr_path = pr.write_to_yaml({'PolicyRule': pcc_rules})
@@ -66,7 +64,6 @@ def create_yaml_from_fng(fng_inputs_dir):
 
     return {
         'FilterBaseYAML': filter_base_path,
-        'FilterYAML': filter_path,
         'PolicyRuleYAML': pr_path,
         'PolicyRuleBaseYAML': prb_path,
         'QoSYAML': qos_path
@@ -79,8 +76,6 @@ def create_yaml_for_cmg(base_yaml_dir):
         raise FileNotFoundError('Directory {} is Empty'.format(base_yaml_dir))
     if 'FilterBase.yaml' not in list_of_files:
         raise FileNotFoundError("Couldn't find FilterBase YAML file in {} directory".format(base_yaml_dir))
-    if 'PolicyRuleFilter.yaml' not in list_of_files:
-        raise FileNotFoundError("Couldn't find PolicyRuleFilter YAML file in {} directory".format(base_yaml_dir))
     if 'PolicyRule.yaml' not in list_of_files:
         raise FileNotFoundError("Couldn't find PolicyRule YAML file in {} directory".format(base_yaml_dir))
     if 'PolicyRuleBase.yaml' not in list_of_files:
@@ -98,7 +93,6 @@ def create_yaml_for_cmg(base_yaml_dir):
     os.chdir(os.path.join(os.getcwd(), 'cmgYAML'))
 
     filter_base_yaml = os.path.join(base_yaml_dir, 'FilterBase.yaml')
-    filter_yaml = os.path.join(base_yaml_dir, 'PolicyRuleFilter.yaml')
     policy_rule_yaml = os.path.join(base_yaml_dir, 'PolicyRule.yaml')
     policy_rule_base_yaml = os.path.join(base_yaml_dir, 'PolicyRuleBase.yaml')
     qos_profile_yaml = os.path.join(base_yaml_dir, 'QoSProfiles.yaml')
@@ -108,13 +102,13 @@ def create_yaml_for_cmg(base_yaml_dir):
     he_templates_yaml = create_he_template_yaml(policy_rule_yaml=policy_rule_yaml)
     header_enrichment_yaml = create_header_enrichment_yaml(policy_rule_yaml=policy_rule_yaml,
                                                            he_templates_yaml=he_templates_yaml)
-    prefix_yaml = create_prefix_list_yaml(policy_rule_filter_yaml=filter_yaml, filter_base_yaml=filter_base_yaml)
-    dns_ip_cache_yaml = create_dns_yaml(policy_rule_filter_yaml=filter_yaml, policy_rule_yaml=policy_rule_yaml,
+    prefix_yaml = create_prefix_list_yaml(policy_rule_yaml=policy_rule_yaml, filter_base_yaml=filter_base_yaml)
+    dns_ip_cache_yaml = create_dns_yaml(policy_rule_yaml=policy_rule_yaml,
                                         filter_base_yaml=filter_base_yaml)
 
-    server_port_yaml = create_port_list_yaml(policy_rule_filter_yaml=filter_yaml, filter_base_yaml=filter_base_yaml,
+    server_port_yaml = create_port_list_yaml(policy_rule_yaml=policy_rule_yaml, filter_base_yaml=filter_base_yaml,
                                              prefix_list_yaml=prefix_yaml)
-    app_filter_yaml = create_app_filter_yaml(policy_rule_filter_yaml=filter_yaml, dns_ip_cache_yaml=dns_ip_cache_yaml,
+    app_filter_yaml = create_app_filter_yaml(dns_ip_cache_yaml=dns_ip_cache_yaml,
                                              prefix_list_yaml=prefix_yaml, server_port_yaml=server_port_yaml,
                                              filter_base_yaml=filter_base_yaml, policy_rule_yaml=policy_rule_yaml)
     policy_rule_unit_yaml = create_policy_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml)
@@ -276,11 +270,11 @@ def main():
         print("Parsing FNG Files and Creating Base YAML files, please wait.")
         path_dict = create_yaml_from_fng(args.flexiNG)
         print(
-            'BaseYAML Files were created on the following Paths:\n\nFilterBaseYAML:{filter_base_path}\n\nFilterYAML: '
-            '{filter_path}\n\nPolicyRuleYAML: {pr_path}\n\nPolicyRuleBaseYAML: {prb_path}'
-            '\n\nQosYAML: {qos_path}'.format(
-                filter_base_path=path_dict.get('FilterBaseYAML'), filter_path=path_dict.get('FilterYAML'),
-                pr_path=path_dict.get('PolicyRuleYAML'), prb_path=path_dict.get('PolicyRuleBaseYAML'),
+            'BaseYAML Files were created on the following Paths:\n\nFilterBaseYAML:{filter_base_path}\n'
+            'PolicyRuleYAML: {pr_path}\nPolicyRuleBaseYAML: {prb_path}'
+            '\nQosYAML: {qos_path}'.format(
+                filter_base_path=path_dict.get('FilterBaseYAML'), pr_path=path_dict.get('PolicyRuleYAML'),
+                prb_path=path_dict.get('PolicyRuleBaseYAML'),
                 qos_path=path_dict.get('QoSYAML')
             ))
         return
@@ -289,15 +283,15 @@ def main():
         print("Creating all CMG MoP files, please wait.")
         path_dict = create_mop_from_cmg_yaml(cmg_yaml_dir=args.cmgYAML, templates_dir=args.templates)
         print('CMG MoP Files were created on the following Paths:\n\n'
-              'Application MoP: {application_mop}\n\n'
-              'Charging Rule Unit MoP: {charging_mop}\n\n'
-              'Port List MoP: {port_list_mop}\n\n'
-              'Prefix list MoP: {prefix_list_mop}\n\n'
-              'DNS IP Cache MoP: {dns_mop}\n\n'
-              'APP Filter MoP: {app_filter_mop}\n\n'
-              'Header Enrichment MoP: {he_mop}\n\n'
-              'Policy Rule Unit MoP: {pru_mop}\n\n'
-              'Policy Rule MoP: {pr_mop}\n\n'
+              'Application MoP: {application_mop}\n'
+              'Charging Rule Unit MoP: {charging_mop}\n'
+              'Port List MoP: {port_list_mop}\n'
+              'Prefix list MoP: {prefix_list_mop}\n'
+              'DNS IP Cache MoP: {dns_mop}\n'
+              'APP Filter MoP: {app_filter_mop}\n'
+              'Header Enrichment MoP: {he_mop}\n'
+              'Policy Rule Unit MoP: {pru_mop}\n'
+              'Policy Rule MoP: {pr_mop}\n'
               'Policy Rule Base MoP: {prb_mop}'.format(
             application_mop=path_dict.get('ApplicationMOP'), charging_mop=path_dict.get('ChargingMOP'),
             port_list_mop=path_dict.get('PortListMOP'), prefix_list_mop=path_dict.get('PrefixMOP'),

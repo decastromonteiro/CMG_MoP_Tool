@@ -1,5 +1,6 @@
 import os
 
+from utils.rule_filter_dict import create_rule_filter_dict
 from utils.yaml import YAML
 from app_filter.app_filter import create_filter_base_rule_dict
 
@@ -16,11 +17,10 @@ def export_yaml(data, project_name='DnsIpCache'):
     return path
 
 
-def create_dns_yaml(policy_rule_filter_yaml, policy_rule_yaml, filter_base_yaml):
+def create_dns_yaml(policy_rule_yaml, filter_base_yaml):
     policy_rule_domain_dict = dict()
-    policy_rule_filter_dict = read_yaml_file(policy_rule_filter_yaml).get('PolicyRuleFilter')
+    policy_rule_filter_dict = create_rule_filter_dict(policy_rule_yaml)
     filter_base_dict = read_yaml_file(filter_base_yaml).get('FilterBase')
-    filter_base_rule_dict = create_filter_base_rule_dict(policy_rule_yaml)
 
     for key in filter_base_dict:
         filter_dict = filter_base_dict.get(key)
@@ -104,7 +104,6 @@ def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
 
 def main():
     path = create_dns_yaml(
-        policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
         policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
         filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
 

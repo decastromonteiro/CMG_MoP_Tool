@@ -1,5 +1,6 @@
 import os
 
+from utils.rule_filter_dict import create_rule_filter_dict
 from utils.yaml import YAML
 import re
 
@@ -16,8 +17,8 @@ def export_yaml(data, project_name='ServerPort'):
     return path
 
 
-def create_port_list_yaml(policy_rule_filter_yaml, filter_base_yaml, prefix_list_yaml):
-    policy_rule_filter_dict = read_yaml_file(policy_rule_filter_yaml).get('PolicyRuleFilter')
+def create_port_list_yaml(policy_rule_yaml, filter_base_yaml, prefix_list_yaml):
+    policy_rule_filter_dict = create_rule_filter_dict(policy_rule_yaml)
     prefix_list_dict = read_yaml_file(prefix_list_yaml).get('PrefixList')
     filter_base_dict = read_yaml_file(filter_base_yaml).get('FilterBase')
     port_list_dict = dict()

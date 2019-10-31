@@ -94,6 +94,8 @@ def parse_filter_base(file_input):
                     filter_dict.update(
                         {'source-address': source_address_match[0]}
                     )
+        if filter_base_dict:
+            list_of_filter_base.update(filter_base_dict)
         return list_of_filter_base
 
 
@@ -166,10 +168,12 @@ def parse_pcc_rule_filter(file_input):
                         {'source-address': source_address_match[0]}
                     )
 
+        if pcc_rule_dict:
+            list_of_pcc_rule.update(pcc_rule_dict)
         return list_of_pcc_rule
 
 
-def parse_pcc_rule(file_input):
+def parse_pcc_rule(file_input, pcc_rule_filter_dict):
     pcc_rule_name_pattern = r'pcc-rule-name = (.+)'
     pcc_filter_base_pattern = r'pcc-filter-base-name = (.+)'
     list_of_pcc_rule = dict()
@@ -242,7 +246,9 @@ def parse_pcc_rule(file_input):
                 if service_id_match:
                     parameter_dict.update({'service-id': service_id_match[0]})
                     list_of_pcc_rule.update(pcc_rule_dict)
-        # list_of_pcc_rule = sorted(list_of_pcc_rule, key=lambda k: k[list(k.keys())[0]]['precedence'])
+        for pcc_rule in list_of_pcc_rule:
+            list_of_pcc_rule.get(pcc_rule).update({'Filters': pcc_rule_filter_dict.get(pcc_rule)})
+
         list_of_pcc_rule = OrderedDict(sorted(list_of_pcc_rule.items(), key=lambda x: x[1]['precedence']))
         return list_of_pcc_rule
 
@@ -268,7 +274,8 @@ def parse_pcc_rule_base(file_input):
                         convertion_dict.get(pcc_rule_name_match[0], pcc_rule_name_match[0]))
             if line.startswith('pcc-rule-base-identifier'):
                 dict_of_pcc_rule_base.update(pcc_rule_base_dict)
-
+        if pcc_rule_base_dict:
+            dict_of_pcc_rule_base.update(pcc_rule_base_dict)
         return dict_of_pcc_rule_base
 
 
@@ -293,6 +300,8 @@ def parse_qos_profiles(file_input):
                 if max_bit_rate_ul:
                     parameter_dict.update({'maximum-bit-rate-ul': max_bit_rate_ul[0]})
                     dict_of_qos_profile.update(qos_profile_dict)
+    if qos_profile_dict:
+        dict_of_qos_profile.update(qos_profile_dict)
     return dict_of_qos_profile
 
 

@@ -1,4 +1,5 @@
 from utils.yaml import YAML
+from utils.rule_filter_dict import create_rule_filter_dict
 import os
 
 
@@ -19,15 +20,16 @@ def get_filter_base(filter_base_yaml):
     return aggregate_address(filter_base_list)
 
 
-def get_filter(filter_yaml):
-    pr_filter_list = read_yaml_file(filter_yaml).get('PolicyRuleFilter')
-    return aggregate_address(pr_filter_list)
+def get_filter(policy_rule_yaml):
+    policy_rule_filters = create_rule_filter_dict(policy_rule_yaml)
+    return aggregate_address(policy_rule_filters)
 
 
 def aggregate_address(input_dict):
     if input_dict:
         aggregation_list = dict()
         for key in input_dict:
+
             list_of_filters_dict = input_dict.get(key)
             aggregate_addresses = dict()
             filter_base_aggregation = dict()
@@ -66,8 +68,8 @@ def chuncks(lista, size):
         yield lista[i:i + size]
 
 
-def create_prefix_list_yaml(policy_rule_filter_yaml, filter_base_yaml):
-    filters = get_filter(policy_rule_filter_yaml)
+def create_prefix_list_yaml(policy_rule_yaml, filter_base_yaml):
+    filters = get_filter(policy_rule_yaml)
     filter_bases = get_filter_base(filter_base_yaml)
     if filters and filter_bases:
         filters.update(filter_bases)
@@ -138,7 +140,7 @@ def create_prefix_list_mop(prefix_yaml_input, command_yaml_input):
 
 
 def main():
-    path = create_prefix_list_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
+    path = create_prefix_list_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
                                    r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
 
     create_prefix_list_mop(path,

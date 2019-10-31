@@ -1,5 +1,6 @@
 import os
 
+from utils.rule_filter_dict import create_rule_filter_dict
 from utils.yaml import YAML
 import re
 
@@ -85,7 +86,7 @@ def create_domain_dns_dict(dns_ip_cache_yaml):
     return domain_dns_ip_cache
 
 
-def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
+def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                            dns_ip_cache_yaml, server_port_yaml):
     dns_ip_cache = create_domain_dns_dict(dns_ip_cache_yaml)
     application_pattern = r'(.*)_\d+_\d+'
@@ -94,7 +95,7 @@ def create_app_filter_yaml(policy_rule_filter_yaml, prefix_list_yaml, policy_rul
     domain_pattern = r'Domain(.*)Host'
     host_pattern = r'Host(.*)URI'
     uri_pattern = r'URI(.*)'
-    policy_rule_filter_dict = read_yaml_file(policy_rule_filter_yaml).get('PolicyRuleFilter')
+    policy_rule_filter_dict = create_rule_filter_dict(policy_rule_yaml)
     prefix_list_dict = read_yaml_file(prefix_list_yaml).get('PrefixList')
     filter_base_dict = read_yaml_file(filter_base_yaml).get('FilterBase')
     entries_application_dict = dict()
@@ -371,7 +372,6 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
 
 def main():
     path = create_app_filter_yaml(
-        policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
         prefix_list_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\prefix_list\PrefixList.yaml',
         policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
         filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml',
