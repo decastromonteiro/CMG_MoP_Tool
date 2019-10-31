@@ -6,7 +6,7 @@ from header_enrichment.header_enrichment import create_he_template_yaml, create_
     create_header_enrichment_mop
 from parsers.fng_parser import *
 from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_rule_yaml, create_policy_rule_unit_mop, \
-    create_policy_rule_mop, create_policy_rule_base_mop
+    create_policy_rule_mop, create_policy_rule_base_mop, create_policy_rule_base_yaml
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
 import argparse
@@ -119,6 +119,7 @@ def create_yaml_for_cmg(base_yaml_dir):
                                              filter_base_yaml=filter_base_yaml, policy_rule_yaml=policy_rule_yaml)
     policy_rule_unit_yaml = create_policy_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml)
     cmg_policy_rule_yaml = create_policy_rule_yaml(policy_rule_yaml=policy_rule_yaml)
+    cmg_policy_rule_base_yaml = create_policy_rule_base_yaml(policy_rule_base_yaml=policy_rule_base_yaml)
 
     return {
         'ApplicationYAML': application_yaml,
@@ -130,13 +131,14 @@ def create_yaml_for_cmg(base_yaml_dir):
         'ServerPortYAML': server_port_yaml,
         'AppFilterYAML': app_filter_yaml,
         'PolicyRuleUnitYAML': policy_rule_unit_yaml,
-        'CMGPolicyRule': cmg_policy_rule_yaml
+        'CMGPolicyRule': cmg_policy_rule_yaml,
+        'CMGPolicyRuleBase': cmg_policy_rule_base_yaml
     }
 
 
-def create_mop_from_cmg_yaml(cmg_yaml_dir, base_yaml_dir, templates_dir):
+def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir):
     list_of_files = os.listdir(cmg_yaml_dir)
-    list_of_files_base = os.listdir(base_yaml_dir)
+    # list_of_files_base = os.listdir(base_yaml_dir)
     list_of_templates = os.listdir(templates_dir)
 
     # CMG YAML Check
@@ -162,19 +164,21 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, base_yaml_dir, templates_dir):
         raise FileNotFoundError("Couldn't find Policy Rule Unit YAML file in {} directory".format(cmg_yaml_dir))
     if 'CMGPolicyRule.yaml' not in list_of_files:
         raise FileNotFoundError("Couldn't find CMG Policy Rule YAML file in {} directory".format(cmg_yaml_dir))
+    if 'CMGPolicyRuleBase.yaml' not in list_of_files:
+        raise FileNotFoundError("Couldn't find CMG Policy Rule Base YAML file in {} directory".format(cmg_yaml_dir))
     if len(list_of_files) != len(set(list_of_files)):
         raise FileExistsError(
             "Inputs are duplicated, please check the CMG YAML Directory and make sure only one input of each exists")
-    # BASE YAML Check
-    if not list_of_files_base:
-        raise FileNotFoundError('Directory {} is Empty'.format(cmg_yaml_dir))
-    if 'PolicyRuleBase.yaml' not in list_of_files_base:
-        raise FileNotFoundError("Couldn't find PolicyRuleBase YAML file in {} directory".format(base_yaml_dir))
-    if 'QoSProfiles.yaml' not in list_of_files_base:
-        raise FileNotFoundError("Couldn't find QoSProfiles YAML file in {} directory".format(base_yaml_dir))
-    if len(list_of_files_base) != len(set(list_of_files_base)):
-        raise FileExistsError(
-            "Inputs are duplicated, please check the Base YAML Directory and make sure only one input of each exists")
+    # # BASE YAML Check
+    # if not list_of_files_base:
+    #     raise FileNotFoundError('Directory {} is Empty'.format(cmg_yaml_dir))
+    # if 'PolicyRuleBase.yaml' not in list_of_files_base:
+    #     raise FileNotFoundError("Couldn't find PolicyRuleBase YAML file in {} directory".format(base_yaml_dir))
+    # if 'QoSProfiles.yaml' not in list_of_files_base:
+    #     raise FileNotFoundError("Couldn't find QoSProfiles YAML file in {} directory".format(base_yaml_dir))
+    # if len(list_of_files_base) != len(set(list_of_files_base)):
+    #     raise FileExistsError(
+    #         "Inputs are duplicated, please check the Base YAML Directory and make sure only one input of each exists")
 
     # Templates Dir Check
     if not list_of_templates:
@@ -214,9 +218,10 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, base_yaml_dir, templates_dir):
     app_filter_yaml = os.path.join(cmg_yaml_dir, 'AppFilter.yaml')
     pru_yaml = os.path.join(cmg_yaml_dir, 'PolicyRuleUnit.yaml')
     pr_yaml = os.path.join(cmg_yaml_dir, 'CMGPolicyRule.yaml')
-    # Base YAML Files
-    policy_rule_base_yaml = os.path.join(base_yaml_dir, 'PolicyRuleBase.yaml')
-    qos_profile_yaml = os.path.join(base_yaml_dir, 'QoSProfiles.yaml')
+    cmg_policy_rule_base_yaml = os.path.join(cmg_yaml_dir, 'CMGPolicyRuleBase.yaml')
+    # # Base YAML Files
+    # policy_rule_base_yaml = os.path.join(base_yaml_dir, 'PolicyRuleBase.yaml')
+    # # qos_profile_yaml = os.path.join(base_yaml_dir, 'QoSProfiles.yaml')
     # Commands Templates
     app_filter_commands = os.path.join(templates_dir, 'app_filter.yaml')
     application_commands = os.path.join(templates_dir, 'application_commands.yaml')
@@ -238,7 +243,7 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, base_yaml_dir, templates_dir):
                                           commands_template=he_commands)
     pru_mop = create_policy_rule_unit_mop(policy_rule_unit_yaml=pru_yaml, policy_rule_commands_template=pr_commands)
     pr_mop = create_policy_rule_mop(policy_rule_yaml=pr_yaml, policy_rule_commands_template=pr_commands)
-    prb_mop = create_policy_rule_base_mop(policy_rule_base_yaml=policy_rule_base_yaml,
+    prb_mop = create_policy_rule_base_mop(cmg_policy_rule_base_yaml=cmg_policy_rule_base_yaml,
                                           policy_rule_commands_template=pr_commands)
 
     return {
@@ -257,7 +262,7 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, base_yaml_dir, templates_dir):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-fng", "--flexing", type=str,
+    parser.add_argument("-fng", "--flexiNG", type=str,
                         help="Input Flexi NG inputs Directory PATH")
     parser.add_argument("-by", "--baseYAML", type=str,
                         help="Input BaseYAML Directory PATH")
@@ -267,9 +272,9 @@ def main():
                         help="Input Commands Template Directory PATH")
     args = parser.parse_args()
 
-    if args.flexing:
+    if args.flexiNG:
         print("Parsing FNG Files and Creating Base YAML files, please wait.")
-        path_dict = create_yaml_from_fng(args.flexing)
+        path_dict = create_yaml_from_fng(args.flexiNG)
         print(
             'BaseYAML Files were created on the following Paths:\n\nFilterBaseYAML:{filter_base_path}\n\nFilterYAML: '
             '{filter_path}\n\nPolicyRuleYAML: {pr_path}\n\nPolicyRuleBaseYAML: {prb_path}'
@@ -280,10 +285,9 @@ def main():
             ))
         return
 
-    if args.cmgYAML and args.baseYAML and args.templates:
+    if args.cmgYAML and args.templates:
         print("Creating all CMG MoP files, please wait.")
-        path_dict = create_mop_from_cmg_yaml(cmg_yaml_dir=args.cmgYAML, base_yaml_dir=args.baseYAML,
-                                             templates_dir=args.templates)
+        path_dict = create_mop_from_cmg_yaml(cmg_yaml_dir=args.cmgYAML, templates_dir=args.templates)
         print('CMG MoP Files were created on the following Paths:\n\n'
               'Application MoP: {application_mop}\n\n'
               'Charging Rule Unit MoP: {charging_mop}\n\n'
@@ -305,17 +309,18 @@ def main():
     elif args.baseYAML:
         print("Creating all CMG YAML files, please wait.")
         path_dict = create_yaml_for_cmg(args.baseYAML)
-        print('CMG YAML Files were created on the following Paths:\n\n'
-              'Application YAML: {application_yaml}\n\n'
-              'Charging YAML: {charging_yaml}\n\n'
-              'HE Templates YAML: {he_templates_yaml}\n\n'
-              'Header Enrichment YAML: {header_enrichment_yaml}\n\n'
-              'Prefix List YAML: {prefix_yaml}\n\n'
-              'DNS IP Cache YAML: {dns_ip_cache_yaml}\n\n'
-              'Server Port YAML: {server_port_yaml}\n\n'
-              'APP Filter YAML: {app_filter_yaml}\n\n'
-              'Policy Rule Unit YAML: {pru_yaml}\n\n'
-              'CMG Policy Rule YAML: {pr_yaml}'.format(
+        print('CMG YAML Files were created on the following Paths:\n'
+              'Application YAML: {application_yaml}\n'
+              'Charging YAML: {charging_yaml}\n'
+              'HE Templates YAML: {he_templates_yaml}\n'
+              'Header Enrichment YAML: {header_enrichment_yaml}\n'
+              'Prefix List YAML: {prefix_yaml}\n'
+              'DNS IP Cache YAML: {dns_ip_cache_yaml}\n'
+              'Server Port YAML: {server_port_yaml}\n'
+              'APP Filter YAML: {app_filter_yaml}\n'
+              'Policy Rule Unit YAML: {pru_yaml}\n'
+              'CMG Policy Rule YAML: {pr_yaml}\n'
+              'CMG Policy Rule Base YAML: {prb_yaml}\n'.format(
             application_yaml=path_dict.get('ApplicationYAML'),
             charging_yaml=path_dict.get('ChargingYAML'),
             he_templates_yaml=path_dict.get('HETemplatesYAML'),
@@ -325,11 +330,12 @@ def main():
             server_port_yaml=path_dict.get('ServerPortYAML'),
             app_filter_yaml=path_dict.get('AppFilterYAML'),
             pru_yaml=path_dict.get('PolicyRuleUnitYAML'),
-            pr_yaml=path_dict.get('CMGPolicyRule'))
+            pr_yaml=path_dict.get('CMGPolicyRule'),
+            prb_yaml=path_dict.get('CMGPolicyRuleBase'))
         )
         return
     else:
-        print("When inputing cmgYAML please provide baseYAML and templates aswell.")
+        print("When inputing cmgYAML please provide Templates as well.")
         return
 
 

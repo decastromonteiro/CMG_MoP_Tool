@@ -4,6 +4,10 @@ commands:
     ip-cache-size: '/configure application-assurance group 1 dns-ip-cache "{name}" ip-cache size {ip_cache_size}'
     add_domain: '/configure application-assurance group 1 dns-ip-cache "{name}" dns-match domain "{pr_name}" expression "{domain_name}"'
     no_shutdown: '/configure application-assurance group 1 dns-ip-cache "{name}" no shutdown'
+    aqp-begin: '/configure application-assurance group {partition} policy begin'
+    aqp-create: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} create'
+    aqp-add-dns: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} action dns-ip-cache {dns_ip_cache}'
+    aqp-commit: '/configure application-assurance group {partition} policy commit'
   rollback:
     remove: null
     remove_domain: null

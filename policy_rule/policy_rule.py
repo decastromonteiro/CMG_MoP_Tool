@@ -78,6 +78,15 @@ def create_policy_rule_yaml(policy_rule_yaml):
     return export_yaml(output_policy_rule_dict, project_name='CMGPolicyRule')
 
 
+def create_policy_rule_base_yaml(policy_rule_base_yaml):
+    prb_dict = read_yaml_file(policy_rule_base_yaml).get('PolicyRuleBase')
+    prb_output_dict = dict()
+    for key in prb_dict:
+        prb_output_dict.update({key: {'policy-rules': prb_dict.get(key), 'characteristics': None}})
+
+    return export_yaml(prb_output_dict, project_name='CMGPolicyRuleBase')
+
+
 def create_policy_rule_unit_mop(policy_rule_unit_yaml, policy_rule_commands_template):
     pru_dict = read_yaml_file(policy_rule_unit_yaml).get('PolicyRuleUnit')
     provision_command_dict = read_yaml_file(policy_rule_commands_template).get('commands').get('provision')
@@ -129,14 +138,14 @@ def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
     return os.path.abspath('mop_policy_rule.txt')
 
 
-def create_policy_rule_base_mop(policy_rule_base_yaml, policy_rule_commands_template):
-    pr_base_dict = read_yaml_file(policy_rule_base_yaml).get('PolicyRuleBase')
+def create_policy_rule_base_mop(cmg_policy_rule_base_yaml, policy_rule_commands_template):
+    pr_base_dict = read_yaml_file(cmg_policy_rule_base_yaml).get('CMGPolicyRuleBase')
     provision_command_dict = read_yaml_file(policy_rule_commands_template).get('commands').get('provision')
 
     pr_base_commands = list()
     pr_base_commands.append(provision_command_dict.get('begin'))
     for key in pr_base_dict:
-        for policy_rule in pr_base_dict.get(key):
+        for policy_rule in pr_base_dict.get(key).get('policy-rules'):
             pr_base_commands.append(provision_command_dict.get('rule_base').format(
                 policy_rule_base=key, policy_rule=policy_rule
             ))

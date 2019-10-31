@@ -58,6 +58,7 @@ def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
     provision_commands = read_yaml_file(dns_commands_yaml).get('commands').get('provision')
     commands_list = list()
     used_domains = set()
+    aqp_entry = 11000
     for dns_ip_cache in dns_ip_cache_dict:
         ip_cache_size = dns_ip_cache_dict.get(dns_ip_cache).get('ip-cache-size')
         rule_domain = dns_ip_cache_dict.get(dns_ip_cache).get('domains')
@@ -86,6 +87,13 @@ def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
             name=dns_ip_cache
         ))
 
+        if rule_domain:
+            commands_list.extend([provision_commands.get('aqp-begin').format(partition='1:1'),
+                                  provision_commands.get('aqp-create').format(partition='1:1', entry=aqp_entry),
+                                  provision_commands.get('aqp-add-dns').format(partition='1:1', entry=aqp_entry,
+                                                                               dns_ip_cache=dns_ip_cache),
+                                  provision_commands.get('aqp-commit').format(partition='1:1')])
+            aqp_entry += 10
     with open('mop_dns_ip_cache.txt', 'w') as fout:
         for command in commands_list:
             fout.write(command)
