@@ -266,9 +266,18 @@ def main():
                         help="Input Commands Template Directory PATH")
     args = parser.parse_args()
 
+    print("Welcome to CMG Application Assurance Tool v1.1\n\n"
+          "Author: Leonardo Monteiro (leonardo.monteiro@nokia.com)\n\n"
+          "ChangeLog:\n"
+          "v1.0 - First Version\n"
+          "v1.1 - Included domain-name on AppFilter.yaml file and "
+          "included http-host based on domain-name if http-host is not "
+          "provided and ip-protocol-num different from UDP\n\n")
+
     if args.flexiNG:
-        print("Parsing FNG Files and Creating Base YAML files, please wait.")
-        path_dict = create_yaml_from_fng(args.flexiNG)
+        print('#### Initializing script... ####\n\n')
+        print("Parsing FNG Files and Creating Base YAML files, please wait.\n")
+        path_dict = create_yaml_from_fng(os.path.abspath(args.flexiNG))
         print(
             'BaseYAML Files were created on the following Paths:\n\nFilterBaseYAML:{filter_base_path}\n'
             'PolicyRuleYAML: {pr_path}\nPolicyRuleBaseYAML: {prb_path}'
@@ -278,10 +287,11 @@ def main():
                 qos_path=path_dict.get('QoSYAML')
             ))
         return
-
     if args.cmgYAML and args.templates:
-        print("Creating all CMG MoP files, please wait.")
-        path_dict = create_mop_from_cmg_yaml(cmg_yaml_dir=args.cmgYAML, templates_dir=args.templates)
+        print('#### Initializing script... ####\n\n')
+        print("Creating all CMG MoP files, please wait.\n")
+        path_dict = create_mop_from_cmg_yaml(cmg_yaml_dir=os.path.abspath(args.cmgYAML),
+                                             templates_dir=os.path.abspath(args.templates))
         print('CMG MoP Files were created on the following Paths:\n\n'
               'Application MoP: {application_mop}\n'
               'Charging Rule Unit MoP: {charging_mop}\n'
@@ -301,8 +311,9 @@ def main():
         ))
         return
     elif args.baseYAML:
-        print("Creating all CMG YAML files, please wait.")
-        path_dict = create_yaml_for_cmg(args.baseYAML)
+        print('#### Initializing script... ####\n\n')
+        print("Creating all CMG YAML files, please wait.\n")
+        path_dict = create_yaml_for_cmg(os.path.abspath(args.baseYAML))
         print('CMG YAML Files were created on the following Paths:\n'
               'Application YAML: {application_yaml}\n'
               'Charging YAML: {charging_yaml}\n'
@@ -328,8 +339,12 @@ def main():
             prb_yaml=path_dict.get('CMGPolicyRuleBase'))
         )
         return
-    else:
+    elif args.cmgYAML:
         print("When inputing cmgYAML please provide Templates as well.")
+        return
+    else:
+        print('If you have doubts on how to use this tool, please run it with --help command.')
+        input()
         return
 
 

@@ -138,6 +138,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                                'server-address': {
                                    'ip-prefix-list': key,
                                    'dns-ip-cache': dns_ip_cache.get(domain),
+                                   'domain-name': domain if domain != '0000' else None,
                                    'ip-address': None
                                },
                                'application': application,
@@ -188,6 +189,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                                        'server-address': {
                                            'ip-prefix-list': None,
                                            'dns-ip-cache': dns_ip_cache.get(domain),
+                                           'domain-name': domain,
                                            'ip-address': None
                                        },
                                        'application': application,
@@ -235,6 +237,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                                        'server-address': {
                                            'ip-prefix-list': None,
                                            'dns-ip-cache': dns_ip_cache.get(domain),
+                                           'domain-name': domain,
                                            'ip-address': None
                                        },
                                        'application': application,
@@ -295,6 +298,19 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
                                                               dns_ip_cache=app_filter_dict.get(entry).get(
                                                                   'server-address').get('dns-ip-cache'))
             )
+            if not app_filter_dict.get(entry).get('expression').get('http-host'):
+                if app_filter_dict.get(entry).get('ip-protocol-num') != '17':
+                    host = app_filter_dict.get(entry).get('server-address').get('domain-name')
+                    host = host if host != '0000' else None
+                    if host:
+                        if not host.startswith('*'):
+                            host = '^' + host
+                        if not host.endswith('*'):
+                            host = host + '$'
+                        list_of_commands.append(
+                            provision_commands.get('http-host').format(partition='1:1', entry=entry,
+                                                                       http_host=host)
+                        )
         elif app_filter_dict.get(entry).get('server-address').get('ip-address'):
             list_of_commands.append(
                 provision_commands.get('ip-address').format(partition='1:1', entry=entry,
@@ -338,6 +354,7 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
                 provision_commands.get('http-host').format(partition='1:1', entry=entry,
                                                            http_host=host)
             )
+
         if app_filter_dict.get(entry).get('expression').get('http-uri'):
             uri = app_filter_dict.get(entry).get('expression').get('http-uri')
             if not uri.startswith('*'):
@@ -348,16 +365,15 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
                 provision_commands.get('http-uri').format(partition='1:1', entry=entry,
                                                           http_uri=uri)
             )
-
-        list_of_commands.append(
-            provision_commands.get('no_shutdown').format(partition='1:1', entry=entry)
-        )
-
         if app_filter_dict.get(entry).get('protocol'):
             list_of_commands.append(
                 provision_commands.get('protocol').format(partition='1:1', entry=entry,
                                                           protocol=app_filter_dict.get(entry).get('protocol'))
             )
+        list_of_commands.append(
+            provision_commands.get('no_shutdown').format(partition='1:1', entry=entry)
+        )
+
     list_of_commands.append(
         provision_commands.get('commit').format(partition='1:1')
     )

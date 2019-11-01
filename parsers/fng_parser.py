@@ -1,7 +1,7 @@
 import re
 from collections import OrderedDict
 from utils.yaml import YAML
-from utils.rule_convertion import convertion_dict
+from utils.rule_convertion import convertion_dict as cdt
 
 filter_base_name_pattern = r'pcc-filter-base-name : (.+)'
 filter_name_pattern = r'filter = (.+)'
@@ -99,7 +99,9 @@ def parse_filter_base(file_input):
         return list_of_filter_base
 
 
-def parse_pcc_rule_filter(file_input):
+def parse_pcc_rule_filter(file_input, convertion_dict=None):
+    if not convertion_dict:
+        convertion_dict = cdt
     list_of_pcc_rule = dict()
     pcc_rule_dict = None
     with open(file_input) as fin:

@@ -155,7 +155,7 @@ convertion_dict = {
     "oilivre_isencao": "GDE35401_RG100_oilivre",
     "oilivre_isencao_header": "GDE35315_RG100_oilivre_ader",
     "oimaisempresas_isencao_he": "GDE30645_RG100_oimaisempresa",
-    "oimulher_isencao_he": "GDE37713_RG100_oimulr_",
+    "oimulher_isencao_he": "GDE37713_RG100_oimulr",
     "oirecado_isencao": "GDE26896_RG100_oirecado",
     "oirevistas_isencao_he": "GDE35857_RG100_oirevistas",
     "oiseguranca_isencao": "GDE37043_RG100_oiseguranca",
