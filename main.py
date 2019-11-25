@@ -5,10 +5,11 @@ from dns_ip_cache.dns_ip_cache import create_dns_yaml, create_dns_mop
 from header_enrichment.header_enrichment import create_he_template_yaml, create_header_enrichment_yaml, \
     create_header_enrichment_mop
 from parsers.fng_parser import *
-from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_rule_yaml, create_policy_rule_unit_mop, \
-    create_policy_rule_mop, create_policy_rule_base_mop, create_policy_rule_base_yaml
+from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_rule_yaml, \
+    create_policy_rule_unit_mop, create_policy_rule_mop, create_policy_rule_base_mop, create_policy_rule_base_yaml
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
+from utils.check_name_lenghts import check_name_lenghts
 
 import argparse
 import os
@@ -114,6 +115,12 @@ def create_yaml_for_cmg(base_yaml_dir):
     policy_rule_unit_yaml = create_policy_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml)
     cmg_policy_rule_yaml = create_policy_rule_yaml(policy_rule_yaml=policy_rule_yaml)
     cmg_policy_rule_base_yaml = create_policy_rule_base_yaml(policy_rule_base_yaml=policy_rule_base_yaml)
+
+    check_name_lenghts(cmg_policy_rule_yaml=cmg_policy_rule_yaml,
+                       prefix_list_yaml=prefix_yaml,
+                       dns_ip_cache_yaml=dns_ip_cache_yaml,
+                       policy_rule_unit_yaml=policy_rule_unit_yaml,
+                       application_yaml=application_yaml)
 
     return {
         'ApplicationYAML': application_yaml,
@@ -264,6 +271,8 @@ def main():
                         help="Input cmgYAML Directory PATH")
     parser.add_argument("-t", "--templates", type=str,
                         help="Input Commands Template Directory PATH")
+    parser.add_argument("-rd", "--ruleDictionary", action="store_true",
+                        help="Provide PATH to Policy-Rule Name conversion if needed.")
     args = parser.parse_args()
 
     print("Welcome to CMG Application Assurance Tool v1.1\n\n"
@@ -302,13 +311,17 @@ def main():
               'Header Enrichment MoP: {he_mop}\n'
               'Policy Rule Unit MoP: {pru_mop}\n'
               'Policy Rule MoP: {pr_mop}\n'
-              'Policy Rule Base MoP: {prb_mop}'.format(
-            application_mop=path_dict.get('ApplicationMOP'), charging_mop=path_dict.get('ChargingMOP'),
-            port_list_mop=path_dict.get('PortListMOP'), prefix_list_mop=path_dict.get('PrefixMOP'),
-            dns_mop=path_dict.get('DNSMOP'), app_filter_mop=path_dict.get('AppFilterMOP'),
-            he_mop=path_dict.get('HeaderEnrichmentMOP'), pru_mop=path_dict.get('PolicyRuleunitMOP'),
-            pr_mop=path_dict.get('PolicyRuleMOP'), prb_mop=path_dict.get('PolicyRuleBaseMOP')
-        ))
+              'Policy Rule Base MoP: {prb_mop}'.format(application_mop=path_dict.get('ApplicationMOP'),
+                                                       charging_mop=path_dict.get('ChargingMOP'),
+                                                       port_list_mop=path_dict.get('PortListMOP'),
+                                                       prefix_list_mop=path_dict.get('PrefixMOP'),
+                                                       dns_mop=path_dict.get('DNSMOP'),
+                                                       app_filter_mop=path_dict.get('AppFilterMOP'),
+                                                       he_mop=path_dict.get('HeaderEnrichmentMOP'),
+                                                       pru_mop=path_dict.get('PolicyRuleunitMOP'),
+                                                       pr_mop=path_dict.get('PolicyRuleMOP'),
+                                                       prb_mop=path_dict.get('PolicyRuleBaseMOP')
+                                                       ))
         return
     elif args.baseYAML:
         print('#### Initializing script... ####\n\n')
@@ -325,19 +338,19 @@ def main():
               'APP Filter YAML: {app_filter_yaml}\n'
               'Policy Rule Unit YAML: {pru_yaml}\n'
               'CMG Policy Rule YAML: {pr_yaml}\n'
-              'CMG Policy Rule Base YAML: {prb_yaml}\n'.format(
-            application_yaml=path_dict.get('ApplicationYAML'),
-            charging_yaml=path_dict.get('ChargingYAML'),
-            he_templates_yaml=path_dict.get('HETemplatesYAML'),
-            header_enrichment_yaml=path_dict.get('HeaderEnrichmentYAML'),
-            prefix_yaml=path_dict.get('PrefixYAML'),
-            dns_ip_cache_yaml=path_dict.get('DnsIpCacheYAML'),
-            server_port_yaml=path_dict.get('ServerPortYAML'),
-            app_filter_yaml=path_dict.get('AppFilterYAML'),
-            pru_yaml=path_dict.get('PolicyRuleUnitYAML'),
-            pr_yaml=path_dict.get('CMGPolicyRule'),
-            prb_yaml=path_dict.get('CMGPolicyRuleBase'))
-        )
+              'CMG Policy Rule Base YAML: {prb_yaml}\n'.format(application_yaml=path_dict.get('ApplicationYAML'),
+                                                               charging_yaml=path_dict.get('ChargingYAML'),
+                                                               he_templates_yaml=path_dict.get('HETemplatesYAML'),
+                                                               header_enrichment_yaml=path_dict.get(
+                                                                   'HeaderEnrichmentYAML'),
+                                                               prefix_yaml=path_dict.get('PrefixYAML'),
+                                                               dns_ip_cache_yaml=path_dict.get('DnsIpCacheYAML'),
+                                                               server_port_yaml=path_dict.get('ServerPortYAML'),
+                                                               app_filter_yaml=path_dict.get('AppFilterYAML'),
+                                                               pru_yaml=path_dict.get('PolicyRuleUnitYAML'),
+                                                               pr_yaml=path_dict.get('CMGPolicyRule'),
+                                                               prb_yaml=path_dict.get('CMGPolicyRuleBase'))
+              )
         return
     elif args.cmgYAML:
         print("When inputing cmgYAML please provide Templates as well.")
