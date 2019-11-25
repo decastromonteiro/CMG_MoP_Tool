@@ -1,4 +1,5 @@
 from utils.yaml import YAML
+from utils.header_fields_convertion import header_field_convertion
 import os
 
 
@@ -33,7 +34,8 @@ def create_he_template_yaml(policy_rule_yaml):
     header_enrichment_dict = dict()
     for he_template in header_enrichment_type_set:
         he_template_name = 'he_template_{}'.format(count)
-        he_template_fields = he_template.split(',')
+        fields = he_template.split(',')
+        he_template_fields = [header_field_convertion.get(item, item) for item in fields]
         header_enrichment_dict.update(
             {he_template_name: {'Description': he_template, 'Fields': he_template_fields}}
         )

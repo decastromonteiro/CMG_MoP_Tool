@@ -176,6 +176,7 @@ def parse_pcc_rule_filter(file_input, convertion_dict=None):
 
 
 def parse_pcc_rule(file_input, pcc_rule_filter_dict):
+    convertion_dict = cdt
     pcc_rule_name_pattern = r'pcc-rule-name = (.+)'
     pcc_filter_base_pattern = r'pcc-filter-base-name = (.+)'
     list_of_pcc_rule = dict()
@@ -256,6 +257,7 @@ def parse_pcc_rule(file_input, pcc_rule_filter_dict):
 
 
 def parse_pcc_rule_base(file_input):
+    convertion_dict = cdt
     pcc_rule_name_pattern = r'pcc-rule-name = (.+?)\s'
     pcc_rule_base_pattern = r'pcc-rule-base-name = (.+)'
     dict_of_pcc_rule_base = dict()
