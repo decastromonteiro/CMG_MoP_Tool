@@ -15,6 +15,8 @@ class YAML:
             yaml.add_representer(OrderedDict, represent_dict_order)
 
         setup_yaml()
+        # noalias_dumper = yaml.dumper.SafeDumper
+        # noalias_dumper.ignore_aliases = lambda self, data: True
         with open('{}.yaml'.format(self.project_name), 'w') as fout:
             yaml.dump(data, fout, default_flow_style=False, allow_unicode=True)
             return os.path.abspath(self.project_name + '.yaml')
@@ -23,3 +25,12 @@ class YAML:
     def read_yaml(yaml_input, loader=yaml.FullLoader):
         with open(yaml_input) as fin:
             return yaml.load(fin, Loader=loader)
+
+    def write_to_yaml_noalias(self, data):
+        noalias_dumper = yaml.dumper.SafeDumper
+        noalias_dumper.ignore_aliases = lambda self, data: True
+        with open('{}.yaml'.format(self.project_name), 'w') as fout:
+            yaml.dump(data, fout, default_flow_style=False, allow_unicode=True, Dumper=noalias_dumper)
+            return os.path.abspath(self.project_name + '.yaml')
+
+# todo: Make ordereddict work with noalias_dumper
