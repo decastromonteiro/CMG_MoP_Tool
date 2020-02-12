@@ -1,5 +1,5 @@
 from utils.yaml import YAML
-from utils.header_fields_convertion import header_field_convertion
+from utils.header_fields_convertion import header_field_conversion
 import os
 
 
@@ -28,17 +28,24 @@ def get_header_enrichment_profiles(policy_rule_yaml):
     return header_enrichment_type
 
 
-def create_he_template_yaml(policy_rule_yaml):
+def create_he_template_yaml(policy_rule_yaml, field_name_dict=None):
+    if not field_name_dict:
+        field_name_dict = dict()
     header_enrichment_type_set = get_header_enrichment_profiles(policy_rule_yaml)
     count = 1
     header_enrichment_dict = dict()
     for he_template in header_enrichment_type_set:
+        field_dict = dict()
         he_template_name = 'he_template_{}'.format(count)
         fields = he_template.split(',')
-        he_template_fields = [header_field_convertion.get(item, item) for item in fields]
+        he_template_fields = [header_field_conversion.get(item, item) for item in fields]
         header_enrichment_dict.update(
-            {he_template_name: {'Description': he_template, 'Fields': he_template_fields}}
-        )
+            {he_template_name: {'Description': he_template,
+                                'Fields': field_dict}})
+        for field in he_template_fields:
+            field_dict.update({
+                field_name_dict.get(field, field): field
+            })
         count += 1
 
     return export_yaml(header_enrichment_dict, project_name='HETemplates')
@@ -87,11 +94,12 @@ def create_header_enrichment_mop(he_template, header_enrichment_yaml, commands_t
                                                                              he_template_dicts.get(he_template).get(
                                                                                  'Description')))
         # Add Fields
-        for field in he_template_dicts.get(he_template).get('Fields'):
+        for field_name in he_template_dicts.get(he_template).get('Fields'):
             list_of_commands.append(
                 provision.get('add_template_field').format(he_name=he_template,
-                                                           field=field,
-                                                           field_name=field.upper())
+                                                           field=he_template_dicts.get(he_template).get('Fields').get(
+                                                               field_name),
+                                                           field_name=field_name)
             )
     for pr_name in http_enrich_dict:
         list_of_commands.append(provision.get('create_aqp_entry').format(
@@ -117,15 +125,17 @@ def create_header_enrichment_mop(he_template, header_enrichment_yaml, commands_t
 
 
 def main():
-    he_template_path = create_he_template_yaml(
-        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
+    # he_template_path = create_he_template_yaml(
+    #     r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
     http_enrich_path = create_header_enrichment_yaml(
         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
-        he_template_path)
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\header_enrichment\HETemplates.yaml')
+    # he_template_path)
 
-    create_header_enrichment_mop(he_template_path,
-                                 http_enrich_path,
-                                 r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\http_enrich.yaml')
+    create_header_enrichment_mop(  # he_template_path,
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\header_enrichment\HETemplates.yaml',
+        http_enrich_path,
+        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\http_enrich.yaml')
 
 
 if __name__ == "__main__":
