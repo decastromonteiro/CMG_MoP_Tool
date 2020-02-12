@@ -1,0 +1,23 @@
+name: HTTP-Redirect Commands
+commands:
+  provision:
+    create_http_redirect: '/configure application-assurance group 1 http-redirect {http_redirect_name} create'
+    template_http_redirect: '/configure application-assurance group 1 http-redirect {http_redirect_name} template {template_number}'
+    description: '/configure application-assurance group 1 http-redirect {http_redirect_name} description {description}'
+    client_reset: '/configure application-assurance group 1 http-redirect {http_redirect_name} tcp-client-reset'
+    redirect_url: '/configure application-assurance group 1 http-redirect {http_redirect_name} redirect-url {redirect_url}'
+    aa_begin: '/configure application-assurance group {partition} policy begin'
+    create_aso: '/configure application-assurance group {partition} policy app-service-options characteristic {characteristic} create'
+    aso_value: '/configure application-assurance group {partition} policy app-service-options characteristic {characteristic} value {aso_value}'
+    aso_default_value: '/configure application-assurance group {partition} policy app-service-options characteristic {characteristic} default-value {aso_value}'
+    create_aqp_entry: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} create'
+    match_aqp_filter_application: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} match application eq "{application}"'
+    match_aqp_filter_app_group: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} match app-group eq "{app-group}"'
+    match_aqp_filter_charging_group: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} match charging-group eq "{charging_group}"'
+    match_aqp_aso: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} match characteristic "{aso}" eq "{aso_value}"'
+    aqp_action: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} action http-redirect "{http_redirect_name}" flow-type dropped-flows'
+    aqp_action_drop: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} action drop'
+    aqp_no_shut: '/configure application-assurance group {partition} policy app-qos-policy entry {entry} no shutdown'
+    aa_commit: '/configure application-assurance group {partition} policy commit'
+  rollback:
+
