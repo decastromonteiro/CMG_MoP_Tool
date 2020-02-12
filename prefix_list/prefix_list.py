@@ -17,12 +17,16 @@ def export_yaml(lista, project_name='PrefixList'):
 
 def get_filter_base(filter_base_yaml):
     filter_base_list = read_yaml_file(filter_base_yaml).get('FilterBase')
-    return aggregate_address(filter_base_list)
+    if filter_base_list:
+        return aggregate_address(filter_base_list)
+    return None
 
 
 def get_filter(policy_rule_yaml):
     policy_rule_filters = create_rule_filter_dict(policy_rule_yaml)
-    return aggregate_address(policy_rule_filters)
+    if policy_rule_filters:
+        return aggregate_address(policy_rule_filters)
+    return None
 
 
 def aggregate_address(input_dict):
@@ -50,6 +54,12 @@ def aggregate_address(input_dict):
                     domain = list_of_filters_dict.get(filter_name).get('domain-name', '0000')
                     host = list_of_filters_dict.get(filter_name).get('host-name', '0000')
                     uri = list_of_filters_dict.get(filter_name).get('l7-uri', '0000')
+
+                    protocol = protocol if protocol else '0000'
+                    ports = ports if ports else '0000'
+                    domain = domain if domain else '0000'
+                    host = host if host else '0000'
+                    uri = uri if uri else '0000'
 
                     aggregation_string = aggregation_string.format(protocol, ports, domain, host, uri)
 

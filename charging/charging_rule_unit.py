@@ -16,9 +16,9 @@ def create_cru_string(policy_rule_dict):
     rg = policy_rule_dict.get('rating-group')
     sid = policy_rule_dict.get('service-id')
 
-    mk_string = 'MK{:03}'.format(int(mk)) if mk != 'null' else ''
-    rg_string = 'RG{:03}'.format(int(rg)) if rg != 'null' else ''
-    sid_string = 'SID{:03}'.format(int(sid)) if sid != 'null' else ''
+    mk_string = 'MK{:03}'.format(int(mk)) if (mk != 'null' and mk is not None) else ''
+    rg_string = 'RG{:03}'.format(int(rg)) if (rg != 'null' and rg is not None) else ''
+    sid_string = 'SID{:03}'.format(int(sid)) if (sid != 'null' and sid is not None) else ''
 
     final_string = rg_string + sid_string + mk_string
     return final_string
