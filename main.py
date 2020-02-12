@@ -71,6 +71,10 @@ def create_yaml_from_fng(fng_inputs_dir):
     }
 
 
+def create_yaml_from_cisco(cisco_input_dir):
+    pass
+
+
 def create_yaml_for_cmg(base_yaml_dir):
     list_of_files = os.listdir(base_yaml_dir)
     if not list_of_files:
@@ -265,6 +269,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-fng", "--flexiNG", type=str,
                         help="Input Flexi NG inputs Directory PATH")
+    parser.add_argument("-cisco", "--ciscoASR", type=str,
+                        help="Input Cisco ASR input Directory PATH")
     parser.add_argument("-by", "--baseYAML", type=str,
                         help="Input BaseYAML Directory PATH")
     parser.add_argument("-cmg", "--cmgYAML", type=str,
