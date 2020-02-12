@@ -347,7 +347,7 @@ def main_oi():
 
     filter_base = parse_filter_base(fng_filter_base)
     filters = parse_pcc_rule_filter(fng_filters)
-    pcc_rules = parse_pcc_rule(pcc_rule)
+    pcc_rules = parse_pcc_rule(pcc_rule, dict())
     pcc_rule_bases = parse_pcc_rule_base(pcc_rule_base)
     qos_profiles = parse_qos_profiles(qos_profile)
 
