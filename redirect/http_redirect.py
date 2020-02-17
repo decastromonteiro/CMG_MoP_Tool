@@ -1,3 +1,5 @@
+import os
+
 from utils.yaml import YAML
 import re
 
@@ -18,7 +20,8 @@ def create_rule_redirect_dict(policy_rule_yaml):
     policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
     rule_redirect_dict = dict()
     for pr_name in policy_rule_dict:
-        if policy_rule_dict.get(pr_name).get('redirect-uri'):
+        if policy_rule_dict.get(pr_name).get('redirect-uri') and policy_rule_dict.get(pr_name).get(
+                'redirect-uri') != 'null':
             rule_redirect_dict.update(
                 {
                     pr_name: policy_rule_dict.get(pr_name).get('redirect-uri')
@@ -54,7 +57,10 @@ def create_redirect_aqp_yaml(http_redirect_yaml, entry=13000, default_charging_g
     http_redirect_dict = read_yaml_file(http_redirect_yaml).get('HTTP-Redirect')
     aqp_redirect_dict = dict()
     for http_redirect_name in http_redirect_dict:
-        application = re.match(pattern, http_redirect_name).group(1)
+        if re.match(pattern, http_redirect_yaml):
+            application = re.match(pattern, http_redirect_name).group(1)
+        else:
+            application = http_redirect_name
         aso = http_redirect_dict.get(http_redirect_name).get('characteristics').get('name')
         aso_value = http_redirect_dict.get(http_redirect_name).get('characteristics').get('value')
         aqp_redirect_dict.update({
@@ -85,16 +91,138 @@ def create_redirect_aqp_yaml(http_redirect_yaml, entry=13000, default_charging_g
     return export_yaml(aqp_redirect_dict, project_name='AQP-HTTP-Redirect')
 
 
-def create_http_redirect_mop(http_redirect_yaml, aqp_http_redirect_yaml):
-    pass
+def create_http_redirect_mop(http_redirect_yaml, http_redirect_template):
+    http_redirect_dict = read_yaml_file(http_redirect_yaml).get('HTTP-Redirect')
+    provision_commands = read_yaml_file(http_redirect_template).get('commands').get('provision')
+
+    list_of_commands = list()
+    for entry in http_redirect_dict:
+        list_of_commands.extend([
+            provision_commands.get('create_http_redirect').format(http_redirect_name=entry),
+            provision_commands.get('template_http_redirect').format(http_redirect_name=entry,
+                                                                    template_number=http_redirect_dict.get(entry).get(
+                                                                        'template')),
+            provision_commands.get('redirect_url').format(http_redirect_name=entry,
+                                                          redirect_url=http_redirect_dict.get(entry).get(
+                                                              'redirect-url'
+                                                          ))
+
+        ])
+        if http_redirect_dict.get(entry).get('description'):
+            list_of_commands.append(provision_commands.get('description').format(http_redirect_name=entry,
+                                                                                 description=http_redirect_dict.get(
+                                                                                     entry).get(
+                                                                                     'description')
+                                                                                 )
+                                    )
+        if http_redirect_dict.get(entry).get('client-reset'):
+            list_of_commands.append(provision_commands.get('client_reset').format(http_redirect_name=entry)
+                                    )
+    with open('mop_http_redirect.txt', 'w') as fout:
+        for command in list_of_commands:
+            fout.write(command)
+            fout.write('\n')
+
+    return os.path.abspath('mop_app_filter.txt')
+
+
+def create_aqp_http_redirect_mop(aqp_http_redirect_yaml, http_redirect_template):
+    http_redirect_dict = read_yaml_file(aqp_http_redirect_yaml).get('AQP-HTTP-Redirect')
+    provision_commands = read_yaml_file(http_redirect_template).get('commands').get('provision')
+
+    list_of_commands = list()
+    list_of_commands.append(
+        provision_commands.get('aa_begin').format(partition='1:1')
+    )
+    for entry in http_redirect_dict:
+        list_of_commands.extend([
+            provision_commands.get('create_aso').format(partition='1:1',
+                                                        characteristic=http_redirect_dict.get(entry).get(
+                                                            'characteristics').get('name')
+                                                        ),
+            provision_commands.get('aso_value').format(partition='1:1',
+                                                       characteristic=http_redirect_dict.get(entry).get(
+                                                           'characteristics').get('name'),
+                                                       aso_value=http_redirect_dict.get(entry).get(
+                                                           'characteristics').get('value')
+                                                       ),
+            provision_commands.get('aso_value').format(partition='1:1',
+                                                       characteristic=http_redirect_dict.get(entry).get(
+                                                           'characteristics').get('name'),
+                                                       aso_value='off'
+                                                       ),
+            provision_commands.get('aso_default_value').format(partition='1:1',
+                                                               characteristic=http_redirect_dict.get(entry).get(
+                                                                   'characteristics').get('name'),
+                                                               aso_value='off'
+                                                               ),
+            provision_commands.get('create_aqp_entry').format(partition='1:1', entry=entry),
+
+            provision_commands.get('match_aqp_aso').format(partition='1:1', entry=entry,
+                                                           aso=http_redirect_dict.get(entry).get('characteristics').get(
+                                                               'name'),
+                                                           aso_value=http_redirect_dict.get(entry).get(
+                                                               'characteristics').get('value')),
+            provision_commands.get('aqp_action').format(partition='1:1', entry=entry,
+                                                        http_redirect_name=http_redirect_dict.get(entry).get(
+                                                            'http-redirect')),
+            provision_commands.get('aqp_action_drop').format(partition='1:1', entry=entry),
+
+            provision_commands.get('aqp_no_shut').format(partition='1:1', entry=entry)
+
+        ])
+        if http_redirect_dict.get(entry).get('app-group'):
+            list_of_commands.append(
+                provision_commands.get('match_aqp_filter_app_group').format(partition='1:1',
+                                                                            entry=entry,
+                                                                            app_group=http_redirect_dict.get(
+                                                                                entry).get(
+                                                                                'app-group')
+                                                                            )
+            )
+        if http_redirect_dict.get(entry).get('charging-group'):
+            list_of_commands.append(
+                provision_commands.get('match_aqp_filter_charging_group').format(partition='1:1',
+                                                                                 entry=entry,
+                                                                                 charging_group=http_redirect_dict.get(
+                                                                                     entry).get(
+                                                                                     'charging-group')
+                                                                                 )
+            )
+        if http_redirect_dict.get(entry).get('application'):
+            list_of_commands.append(
+                provision_commands.get('match_aqp_filter_application').format(partition='1:1',
+                                                                              entry=entry,
+                                                                              application=http_redirect_dict.get(
+                                                                                  entry).get(
+                                                                                  'application')
+                                                                              )
+            )
+    list_of_commands.append(
+        provision_commands.get('aa_commit').format(partition='1:1')
+    )
+    with open('mop_aqp_http_redirect.txt', 'w') as fout:
+        for command in list_of_commands:
+            fout.write(command)
+            fout.write('\n')
+
+    return os.path.abspath('mop_aqp_http_redirect.txt')
 
 
 def main():
-    create_redirect_aqp_yaml(
-        create_redirect_yaml(
-            create_rule_redirect_dict(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml')
-        )
-    )
+    create_aqp_http_redirect_mop(
+        create_redirect_aqp_yaml(
+            create_redirect_yaml(
+                create_rule_redirect_dict(
+                    r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml')
+            )
+        ),
+        r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\templates\http_redirect.yaml')
+
+    create_http_redirect_mop(create_redirect_yaml(
+        create_rule_redirect_dict(
+            r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml')
+    ), r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\templates\http_redirect.yaml')
 
 
 if __name__ == "__main__":
