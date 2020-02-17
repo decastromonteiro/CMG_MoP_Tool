@@ -10,7 +10,9 @@ from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
 from utils.check_name_lenghts import check_name_lenghts
-
+from parsers import cisco_parser as cisco
+from redirect.http_redirect import create_http_redirect_mop, create_redirect_aqp_yaml, create_aqp_http_redirect_mop, \
+    create_redirect_yaml, create_rule_redirect_dict
 import argparse
 import os
 
@@ -72,7 +74,56 @@ def create_yaml_from_fng(fng_inputs_dir):
 
 
 def create_yaml_from_cisco(cisco_input_dir):
-    pass
+    list_of_files = os.listdir(cisco_input_dir)
+    if not len(list_of_files):
+        raise FileNotFoundError(
+            "The directory path you've passed is EMPTY."
+        )
+    if len(list_of_files) > 1:
+        raise FileExistsError(
+            "Inputs are duplicated, please check the Directory and make sure only one input of each exists")
+
+    cisco_input = os.path.join(cisco_input_dir, list_of_files[0])
+
+    if not os.path.exists(os.path.join(os.getcwd(), 'BaseYAML')):
+        os.makedirs(os.path.join(os.getcwd(), 'BaseYAML'))
+
+    if not os.path.exists(os.path.join(os.getcwd(), 'CiscoYAML')):
+        os.makedirs(os.path.join(os.getcwd(), 'CiscoYAML'))
+
+    os.chdir(os.path.join(os.getcwd(), 'CiscoYAML'))
+
+    cisco.filter_base_yaml(cisco_input)
+    cisco.policy_rule_yaml(cisco_input)
+
+    os.chdir('..')
+
+    os.replace(os.path.join(os.getcwd(), 'CiscoYAML', 'PolicyRule.yaml'),
+               os.path.join(os.getcwd(), 'BaseYAML', 'PolicyRule.yaml')
+               )
+    os.replace(os.path.join(os.getcwd(), 'CiscoYAML', 'FilterBase.yaml'),
+               os.path.join(os.getcwd(), 'BaseYAML', 'FilterBase.yaml')
+               )
+    os.replace(os.path.join(os.getcwd(), 'CiscoYAML', 'PolicyRuleBase.yaml'),
+               os.path.join(os.getcwd(), 'BaseYAML', 'PolicyRuleBase.yaml')
+               )
+
+    os.chdir(os.path.join(os.getcwd(), 'BaseYAML'))
+    with open('QoSProfiles.yaml', 'w') as fout:
+        fout.write('')
+
+    return {
+        'FilterBaseYAML': os.path.abspath(
+            os.path.join(os.getcwd(), 'FilterBase.yaml')
+        ),
+        'PolicyRuleYAML': os.path.abspath(
+            os.path.join(os.getcwd(), 'PolicyRule.yaml')
+        ),
+        'PolicyRuleBaseYAML': os.path.abspath(
+            os.path.join(os.getcwd(), 'PolicyRuleBase.yaml')
+        ),
+        'QoSYAML': os.path.join(os.getcwd(), 'QoSProfiles.yaml')
+    }
 
 
 def create_yaml_for_cmg(base_yaml_dir):
@@ -119,6 +170,8 @@ def create_yaml_for_cmg(base_yaml_dir):
     policy_rule_unit_yaml = create_policy_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml)
     cmg_policy_rule_yaml = create_policy_rule_yaml(policy_rule_yaml=policy_rule_yaml)
     cmg_policy_rule_base_yaml = create_policy_rule_base_yaml(policy_rule_base_yaml=policy_rule_base_yaml)
+    http_redirect_yaml = create_redirect_yaml(create_rule_redirect_dict(policy_rule_yaml=policy_rule_yaml))
+    aqp_http_redirect_yaml = create_redirect_aqp_yaml(http_redirect_yaml=http_redirect_yaml)
 
     check_name_lenghts(cmg_policy_rule_yaml=cmg_policy_rule_yaml,
                        prefix_list_yaml=prefix_yaml,
@@ -137,7 +190,9 @@ def create_yaml_for_cmg(base_yaml_dir):
         'AppFilterYAML': app_filter_yaml,
         'PolicyRuleUnitYAML': policy_rule_unit_yaml,
         'CMGPolicyRule': cmg_policy_rule_yaml,
-        'CMGPolicyRuleBase': cmg_policy_rule_base_yaml
+        'CMGPolicyRuleBase': cmg_policy_rule_base_yaml,
+        'HTTP-Redirect': http_redirect_yaml,
+        'AQP-HTTP-Redirect': aqp_http_redirect_yaml
     }
 
 
@@ -302,6 +357,19 @@ def main():
                 qos_path=path_dict.get('QoSYAML')
             ))
         return
+    if args.ciscoASR:
+        print('#### Initializing script... ####\n\n')
+        print("Parsing Cisco File and Creating Base YAML files, please wait.\n")
+        path_dict = create_yaml_from_cisco(os.path.abspath(args.ciscoASR))
+        print(
+            'BaseYAML Files were created on the following Paths:\n\nFilterBaseYAML:{filter_base_path}\n'
+            'PolicyRuleYAML: {pr_path}\nPolicyRuleBaseYAML: {prb_path}'
+            '\nQosYAML: {qos_path}'.format(
+                filter_base_path=path_dict.get('FilterBaseYAML'), pr_path=path_dict.get('PolicyRuleYAML'),
+                prb_path=path_dict.get('PolicyRuleBaseYAML'),
+                qos_path=path_dict.get('QoSYAML')
+            ))
+        return
     if args.cmgYAML and args.templates:
         print('#### Initializing script... ####\n\n')
         print("Creating all CMG MoP files, please wait.\n")
@@ -344,18 +412,24 @@ def main():
               'APP Filter YAML: {app_filter_yaml}\n'
               'Policy Rule Unit YAML: {pru_yaml}\n'
               'CMG Policy Rule YAML: {pr_yaml}\n'
-              'CMG Policy Rule Base YAML: {prb_yaml}\n'.format(application_yaml=path_dict.get('ApplicationYAML'),
-                                                               charging_yaml=path_dict.get('ChargingYAML'),
-                                                               he_templates_yaml=path_dict.get('HETemplatesYAML'),
-                                                               header_enrichment_yaml=path_dict.get(
-                                                                   'HeaderEnrichmentYAML'),
-                                                               prefix_yaml=path_dict.get('PrefixYAML'),
-                                                               dns_ip_cache_yaml=path_dict.get('DnsIpCacheYAML'),
-                                                               server_port_yaml=path_dict.get('ServerPortYAML'),
-                                                               app_filter_yaml=path_dict.get('AppFilterYAML'),
-                                                               pru_yaml=path_dict.get('PolicyRuleUnitYAML'),
-                                                               pr_yaml=path_dict.get('CMGPolicyRule'),
-                                                               prb_yaml=path_dict.get('CMGPolicyRuleBase'))
+              'CMG Policy Rule Base YAML: {prb_yaml}\n'
+              'HTTP Redirect YAML: {http_redirect_yaml}\n'
+              'AQP HTTP Redirect YAML: {aqp_redirect_yaml}\n'.format(application_yaml=path_dict.get('ApplicationYAML'),
+                                                                     charging_yaml=path_dict.get('ChargingYAML'),
+                                                                     he_templates_yaml=path_dict.get('HETemplatesYAML'),
+                                                                     header_enrichment_yaml=path_dict.get(
+                                                                         'HeaderEnrichmentYAML'),
+                                                                     prefix_yaml=path_dict.get('PrefixYAML'),
+                                                                     dns_ip_cache_yaml=path_dict.get('DnsIpCacheYAML'),
+                                                                     server_port_yaml=path_dict.get('ServerPortYAML'),
+                                                                     app_filter_yaml=path_dict.get('AppFilterYAML'),
+                                                                     pru_yaml=path_dict.get('PolicyRuleUnitYAML'),
+                                                                     pr_yaml=path_dict.get('CMGPolicyRule'),
+                                                                     prb_yaml=path_dict.get('CMGPolicyRuleBase'),
+                                                                     http_redirect_yaml=path_dict.get('HTTP-Redirect'),
+                                                                     aqp_redirect_yaml=path_dict.get(
+                                                                         'AQP-HTTP-Redirect')
+                                                                     )
               )
         return
     elif args.cmgYAML:
