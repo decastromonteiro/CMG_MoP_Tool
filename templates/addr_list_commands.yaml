@@ -1,0 +1,7 @@
+commands:
+  provision:
+    create: '/configure mobile-gateway profile addr-list {addr_list_name}'
+    add_prefix: '/configure mobile-gateway profile addr-list {addr_list_name} ip-address {prefix}'
+  rollback:
+    remove:
+    remove_prefix:

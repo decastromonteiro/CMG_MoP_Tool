@@ -1,0 +1,7 @@
+commands:
+  provision:
+    create: '/configure mobile-gateway profile list port-list {port_list}'
+    add_port: '/configure mobile-gateway profile list port-list {port_list} port {port}'
+  rollback:
+    remove: null
+    remove_domain: null
