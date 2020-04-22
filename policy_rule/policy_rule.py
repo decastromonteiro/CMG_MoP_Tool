@@ -22,7 +22,7 @@ def create_pr_to_charging_rule(policy_rule_yaml):
     output_dict = dict()
 
     for key in policy_rule_dict:
-        final_string = create_cru_string(policy_rule_dict.get(key))
+        final_string = create_cru_string(policy_rule_dict.get(key), mk_to_ascii=True)
 
         output_dict.update(
             {key: final_string}

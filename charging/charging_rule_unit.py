@@ -11,25 +11,30 @@ def read_yaml_file(file_input):
     return d
 
 
-def create_cru_string(policy_rule_dict):
+def create_cru_string(policy_rule_dict, mk_to_ascii):
     mk = policy_rule_dict.get('monitoring-key')
     rg = policy_rule_dict.get('rating-group')
     sid = policy_rule_dict.get('service-id')
+    method = policy_rule_dict.get('charging-method')
 
     mk_string = 'MK{:03}'.format(int(mk)) if (mk != 'null' and mk is not None) else ''
+    if mk_to_ascii and mk_string != '':
+        mk_string = 'MK'+str(bytes.fromhex(hex(int(mk_string[2:]))[2:]), "utf-8")
     rg_string = 'RG{:03}'.format(int(rg)) if (rg != 'null' and rg is not None) else ''
     sid_string = 'SID{:03}'.format(int(sid)) if (sid != 'null' and sid is not None) else ''
-
-    final_string = rg_string + sid_string + mk_string
+    method_string = 'CO' if method == 'offline' else 'PP'
+    final_string = rg_string + sid_string + mk_string + '_{}'.format(method_string)
+    if final_string == "_CO":
+        final_string = "RG0_CO"
     return final_string
 
 
-def get_charging_rule_unit(policy_rule_yml):
+def get_charging_rule_unit(policy_rule_yml, mk_to_ascii=True):
     rg_sid_mk_set = set()
     d = read_yaml_file(policy_rule_yml)
     item = d.get('PolicyRule')
     for PR in item:
-        final_string = create_cru_string(item.get(PR))
+        final_string = create_cru_string(item.get(PR), mk_to_ascii)
         if final_string not in rg_sid_mk_set:
             rg_sid_mk_set.add(final_string)
 
@@ -47,7 +52,7 @@ def get_charging_rule_unit(policy_rule_yml):
                                                                                    cg) else None
         d['monitoring-key'] = int(re.findall(monitoring_key_pattern, cg)[0]) if re.findall(monitoring_key_pattern,
                                                                                            cg) else None
-        d['charging-method'] = 'both'
+        d['charging-method'] = 'offline' if cg.endswith('CO') else 'both'
         d['metering-method'] = 'both'
         d['reporting-level'] = 'rating-group' if not re.findall(service_id_pattern, cg) else 'service-id'
         lista.append(d)
@@ -127,9 +132,9 @@ def create_charging_rule_unit_mop(yaml_cru, yaml_template):
 
 
 def main():
-    yaml_cru = create_charging_rule_unit_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
+    yaml_cru = create_charging_rule_unit_yaml(r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml')
     yaml_template = os.path.abspath(
-        r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
+        r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
 
     create_charging_rule_unit_mop(yaml_cru, yaml_template)
 

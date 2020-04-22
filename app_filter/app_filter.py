@@ -1,6 +1,6 @@
 import os
 
-from utils.rule_filter_dict import create_rule_filter_dict
+from utils.utils import create_rule_filter_dict
 from utils.yaml import YAML
 import re
 

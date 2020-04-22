@@ -57,7 +57,7 @@ def create_redirect_aqp_yaml(http_redirect_yaml, entry=13000, default_charging_g
     http_redirect_dict = read_yaml_file(http_redirect_yaml).get('HTTP-Redirect')
     aqp_redirect_dict = dict()
     for http_redirect_name in http_redirect_dict:
-        if re.match(pattern, http_redirect_yaml):
+        if re.match(pattern, http_redirect_name):
             application = re.match(pattern, http_redirect_name).group(1)
         else:
             application = http_redirect_name

@@ -28,7 +28,7 @@ def get_header_enrichment_profiles(policy_rule_yaml):
     return header_enrichment_type
 
 
-def create_he_template_yaml(policy_rule_yaml, field_name_dict=None):
+def create_he_template_yaml(policy_rule_yaml, field_name_dict=None, he_template_dict=None):
     if not field_name_dict:
         field_name_dict = dict()
     header_enrichment_type_set = get_header_enrichment_profiles(policy_rule_yaml)
@@ -37,7 +37,7 @@ def create_he_template_yaml(policy_rule_yaml, field_name_dict=None):
     for he_template in header_enrichment_type_set:
         field_dict = dict()
         he_template_name = 'he_template_{}'.format(count)
-        fields = he_template.split(',')
+        fields = sorted(he_template.split(','))
         he_template_fields = [header_field_conversion.get(item, item) for item in fields]
         header_enrichment_dict.update(
             {he_template_name: {'Description': he_template,

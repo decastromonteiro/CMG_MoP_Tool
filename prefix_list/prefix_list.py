@@ -1,5 +1,5 @@
 from utils.yaml import YAML
-from utils.rule_filter_dict import create_rule_filter_dict
+from utils.utils import create_rule_filter_dict
 import os
 
 

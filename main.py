@@ -9,7 +9,7 @@ from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_
     create_policy_rule_unit_mop, create_policy_rule_mop, create_policy_rule_base_mop, create_policy_rule_base_yaml
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
-from utils.check_name_lenghts import check_name_lenghts
+from utils.utils import check_name_lenghts
 from parsers import cisco_parser as cisco
 from redirect.http_redirect import create_http_redirect_mop, create_redirect_aqp_yaml, create_aqp_http_redirect_mop, \
     create_redirect_yaml, create_rule_redirect_dict

@@ -31,11 +31,25 @@ def export_yaml(data, project_name='RuleBase'):
     return path
 
 
+def pr_diff_based_on_numbers(pr_name):
+    digits_regex = r'-(\d+)--(\d+)|--(\d+)'
+    pattern = re.compile(digits_regex)
+
+    matches = re.search(pattern, pr_name)
+    try:
+        if matches.group(1) and matches.group(2):
+            _sum = int(matches.group(1) + matches.group(2))
+        else:
+            _sum = int(matches.group(3))
+        return _sum
+    except:
+        return pr_name
+
 rule_base_name_pattern = r'rulebase (.+)'
 precedence_pattern = r'action priority (\d+?)\s'
 rule_name_pattern = r'ruledef (.+?)\s'
 group_of_rule_pattern = r'group-of-ruledefs (.+?)\s'
-charging_action_pattern = r'charging-action (\w+)'
+charging_action_pattern = r'charging-action ([a-zA-Z0-9_-]+)'
 monitoring_key_pattern = r'monitoring-key (\d+)'
 he_template_name_pattern = r'xheader-format (.+)'
 he_field_name_pattern = r'insert (.+?)\s'
@@ -93,6 +107,30 @@ def get_rule_base(cisco_input):
     return export_yaml(rule_base_dict, project_name='PolicyRuleBaseCisco')
 
 
+def create_fqdn_list_cmg(rule_def_dict):
+    fqdn_dict = dict()
+    for rule in rule_def_dict:
+        domain_list = list()
+        filters = rule_def_dict.get(rule).get('Filters')
+        for key in filters:
+            domain = filters.get(key).get('domain-name')
+            if domain:
+                if not domain.startswith('*'):
+                    domain = '^' + domain
+                if not domain.endswith('*'):
+                    domain = domain + '$'
+                domain_list.append(domain.replace('.', '\.'))
+
+        if domain_list:
+            fqdn_dict.update(
+                {
+                    rule: domain_list
+                }
+            )
+
+    return export_yaml(fqdn_dict, 'FQDNList')
+
+
 def get_he_templates(cisco_input):
     he_template_dict = dict()
     with open(cisco_input) as fin:
@@ -144,7 +182,7 @@ def get_charging_action(cisco_input):
                 if match_ca:
                     charging_action_name = match_ca[0]
                     charging_action_dict.update({
-                        charging_action_name: dict()
+                        charging_action_name: {'charging-method': 'offline'}
                     })
             if line.startswith('content-id'):
                 match_cid = re.findall(content_id_pattern, line)
@@ -172,6 +210,11 @@ def get_charging_action(cisco_input):
                             'flow-action': match_fa[0]
                         }
                     )
+            if line.startswith('cca charging credit'):
+                charging_action_dict.get(charging_action_name).update({
+                    'charging-method': 'both'
+                })
+
             if line.startswith('cca'):
                 match_rg = re.findall(rating_group_pattern, line)
                 if match_rg:
@@ -390,9 +433,14 @@ def get_ip_host_pool(cisco_input):
 
 
 # Create Base YAML files
-def filter_base_yaml(cisco_input):
-    ruledef = read_yaml_file(get_ruledef(cisco_input)).get('RuleDef')
-    host_pool = read_yaml_file(get_ip_host_pool(cisco_input)).get('HostPool')
+def filter_base_yaml(cisco_input, rule_def_yaml=None, host_pool_yaml=None):
+    if not (rule_def_yaml and host_pool_yaml):
+        ruledef = read_yaml_file(get_ruledef(cisco_input)).get('RuleDef')
+        host_pool = read_yaml_file(get_ip_host_pool(cisco_input)).get('HostPool')
+    else:
+        ruledef = read_yaml_file(rule_def_yaml).get('RuleDef')
+        host_pool = read_yaml_file(host_pool_yaml).get('HostPool')
+    create_fqdn_list_cmg(ruledef)
     filter_base_dict = dict()
     for ruledef_name in ruledef:
         filter_dict = dict()
@@ -410,6 +458,7 @@ def filter_base_yaml(cisco_input):
                                         'destination-port-list'),
                                     'protocol-id': ruledef.get(ruledef_name).get('Filters').get(key).get('protocol-id'),
                                     'host-name': ruledef.get(ruledef_name).get('Filters').get(key).get('host-name'),
+                                    'host-pool': ruledef.get(ruledef_name).get('Filters').get(key).get('host-pool')
 
                                 }
                             }
@@ -437,6 +486,7 @@ def filter_base_yaml(cisco_input):
                                         'destination-port-list'),
                                     'protocol-id': ruledef.get(ruledef_name).get('Filters').get(key).get('protocol-id'),
                                     'host-name': ruledef.get(ruledef_name).get('Filters').get(key).get('host-name'),
+                                    'host-pool': ruledef.get(ruledef_name).get('Filters').get(key).get('host-pool')
 
                                 }
                             }
@@ -526,6 +576,11 @@ def policy_rule_yaml(cisco_input):
     redirect_url_pattern = re.compile(r'redirect-url (.+)')
     policy_rule_dict = dict()
     precedence = 10
+    aux_dict_pr = {k: v for k, v in sorted(aux_dict_pr.items(),
+                                           key=lambda item: (item[1], pr_diff_based_on_numbers(item[1])
+                                                             )
+                                           )}
+
     for pr_name in aux_dict_pr:
         re_extract = re.match(pattern, pr_name)
         filter_base = re_extract.group(1)
@@ -544,8 +599,6 @@ def policy_rule_yaml(cisco_input):
             redirect_uri = None
             action = {'terminate-flow': 'drop'}.get(flow_action, 'charge-v')
 
-        "redirect-url http://cdn-api.gm.com/latam"
-
         policy_rule_dict.update(
             {aux_dict_pr.get(pr_name): {
                 'Filters': None,
@@ -557,7 +610,8 @@ def policy_rule_yaml(cisco_input):
                 'qos-profile-name': None,
                 'rating-group': charging_action_dict.get(charging_action).get('content-id'),
                 'redirect-uri': redirect_uri,
-                'service-id': charging_action_dict.get(charging_action).get('service-id')
+                'service-id': charging_action_dict.get(charging_action).get('service-id'),
+                'charging-method': charging_action_dict.get(charging_action).get('charging-method')
             }}
         )
 
