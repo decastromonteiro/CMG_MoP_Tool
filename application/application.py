@@ -1,6 +1,7 @@
 import os
 
 from utils.yaml import YAML
+from utils.utils import export_mop_file
 
 
 def read_yaml_file(file_input):
@@ -52,11 +53,7 @@ def create_application_mop(application_yaml_input, command_yaml_input):
 
     list_of_commands.append(provision_command_list.get('commit').format(partition='1:1'))
 
-    with open('mop_application.txt', 'w') as fout:
-        for command in list_of_commands:
-            fout.write(command + '\n')
-
-    return os.path.abspath('mop_application.txt')
+    return export_mop_file('aa_application_mop', list_of_commands)
 
 
 def main():

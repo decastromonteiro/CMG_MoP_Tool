@@ -1,6 +1,6 @@
 import os
 
-from utils.utils import create_rule_filter_dict
+from utils.utils import create_rule_filter_dict, export_mop_file
 from utils.yaml import YAML
 import re
 
@@ -84,22 +84,11 @@ def create_port_list_mop(server_port_yaml, port_list_commands_yaml):
                 partition='1:1', port_list=port_dict, port=port
             ))
 
-    with open('mop_port_list.txt', 'w') as fout:
-        for command in list_of_commands:
-            fout.write(command)
-            fout.write('\n')
-
-    return os.path.abspath('mop_port_list.txt')
+    return export_mop_file('aa_port_list_mop', list_of_commands)
 
 
 def main():
-    path = create_port_list_yaml(
-        policy_rule_filter_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleFilter.yaml',
-        prefix_list_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\prefix_list\PrefixList.yaml',
-        filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml'
-    )
-
-    create_port_list_mop(path, r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\port_list_commands.yaml')
+    pass
 
 
 if __name__ == "__main__":

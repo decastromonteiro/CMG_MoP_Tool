@@ -1,5 +1,5 @@
 from utils.yaml import YAML
-from utils.utils import chuncks, get_filter_base, get_filter
+from utils.utils import chuncks, get_filter_base, get_filter, export_mop_file
 import os
 import ipaddress
 import re
@@ -81,11 +81,7 @@ def create_prefix_list_mop(prefix_yaml_input, command_yaml_input):
                         prefix_name=''
                     ))
 
-    with open('mop_ip_prefix.txt', 'w') as fout:
-        for command in command_list:
-            fout.write(command + '\n')
-
-    return os.path.abspath('mop_ip_prefix.txt')
+    return export_mop_file('aa_prefix_ip_list_mop', command_list)
 
 
 def main():

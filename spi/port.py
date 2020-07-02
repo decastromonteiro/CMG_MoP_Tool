@@ -41,4 +41,4 @@ def create_spi_port_list_mop(port_list_yaml, port_list_commands_template):
                 port_list=port_dict, port=port
             ))
 
-    return export_mop_file('mop_port_list', list_of_commands)
+    return export_mop_file('spi_port_list_mop', list_of_commands)

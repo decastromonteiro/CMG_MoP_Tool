@@ -2,6 +2,7 @@ import yaml
 from collections import OrderedDict
 import re
 from utils.yaml import read_yaml_file, export_yaml
+from utils.utils import export_mop_file
 import os
 
 
@@ -128,12 +129,8 @@ def create_charging_rule_unit_mop(yaml_cru, yaml_template):
             ))
 
     list_of_mop_commands.append(provision_commands.get('commit'))
-    with open('charging_rule_unit_mop.txt', 'w') as fout:
-        for command in list_of_mop_commands:
-            fout.write(command)
-            fout.write('\n')
 
-    return os.path.abspath('charging_rule_unit_mop.txt')
+    return export_mop_file('charging_rule_unit_mop', list_of_mop_commands)
 
 
 def main():

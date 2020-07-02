@@ -118,26 +118,6 @@ def create_flow_description(filters_dict, application, port_list_yaml, addr_list
     return flow_description_dict
 
 
-def create_addr_list_mop(addr_list_yaml, addr_list_commands):
-    addr_list_dict = read_yaml_file(addr_list_yaml, 'AddrList')
-
-    addr_list_commands_dict = read_yaml_file(addr_list_commands, 'commands')
-
-    addr_list_provision = addr_list_commands_dict.get('provision')
-
-    list_of_commands = list()
-
-    for addr_list_name in addr_list_dict:
-        list_of_commands.append(addr_list_provision.get('create').format(addr_list_name=addr_list_name))
-        for key in addr_list_dict.get(addr_list_name):
-            addr_list = addr_list_dict.get(addr_list_name).get(key)
-            for address in addr_list:
-                list_of_commands.append(
-                    addr_list_provision.get('add_prefix').format(addr_list_name=addr_list_name, prefix=address))
-
-    return export_mop_file('mop_addr_list', list_of_commands)
-
-
 def create_spi_pru_mop(spi_pru_yaml, spi_pru_commands_yaml):
     spi_pru_dict = read_yaml_file(spi_pru_yaml, 'SPIPolicyRuleUnit')
     spi_pru_commands_dict = read_yaml_file(spi_pru_commands_yaml, 'commands')
@@ -204,7 +184,7 @@ def create_spi_pru_mop(spi_pru_yaml, spi_pru_commands_yaml):
                         port_list=flow_parameters.get('remote-port-list')
                     ))
 
-    return export_mop_file('mop_spi_rule_unit', list_of_commands)
+    return export_mop_file('spi_rule_unit_mop', list_of_commands)
 
 
 def reverse_port_list(port_list_yaml):

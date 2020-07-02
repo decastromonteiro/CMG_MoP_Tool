@@ -41,7 +41,7 @@ def create_dns_snoop_mop(dns_snoop_yaml, spi_dns_commands_yaml):
             ) for i, fqdn in enumerate(fqdn_dict.get(fqdn_name))]
         )
 
-    return export_mop_file('mop_dns_snoop', list_of_commands)
+    return export_mop_file('spi_fqdn_list_mop', list_of_commands)
 
 
 if __name__ == "__main__":

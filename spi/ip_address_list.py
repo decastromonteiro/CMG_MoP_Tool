@@ -57,4 +57,4 @@ def create_addr_list_mop(addr_list_yaml, addr_list_commands):
                 list_of_commands.append(
                     addr_list_provision.get('add_prefix').format(addr_list_name=addr_list_name, prefix=address))
 
-    return export_mop_file('mop_addr_list', list_of_commands)
+    return export_mop_file('addr_list_mop', list_of_commands)

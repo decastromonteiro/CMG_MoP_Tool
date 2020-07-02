@@ -1,6 +1,6 @@
 import os
 
-from utils.utils import create_rule_filter_dict
+from utils.utils import create_rule_filter_dict, export_mop_file
 from utils.yaml import YAML
 import re
 
@@ -384,12 +384,7 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
         provision_commands.get('commit').format(partition='1:1')
     )
 
-    with open('mop_app_filter.txt', 'w') as fout:
-        for command in list_of_commands:
-            fout.write(command)
-            fout.write('\n')
-
-    return os.path.abspath('mop_app_filter.txt')
+    return export_mop_file('aa_app_filter_mop', provision_commands)
 
 
 def main():

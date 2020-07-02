@@ -1,6 +1,6 @@
 import os
 
-from utils.utils import create_rule_filter_dict
+from utils.utils import create_rule_filter_dict, export_mop_file
 from utils.yaml import read_yaml_file, export_yaml
 
 
@@ -90,12 +90,8 @@ def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
                                                                                dns_ip_cache=dns_ip_cache),
                                   provision_commands.get('aqp-commit').format(partition='1:1')])
             aqp_entry += 10
-    with open('mop_dns_ip_cache.txt', 'w') as fout:
-        for command in commands_list:
-            fout.write(command)
-            fout.write('\n')
 
-    return os.path.abspath('mop_dns_ip_cache.txt')
+    return export_mop_file('aa_dns_ip_cache_mop', commands_list)
 
 
 def main():
