@@ -1,14 +1,8 @@
 import yaml
 from collections import OrderedDict
 import re
-from utils.yaml import YAML
+from utils.yaml import read_yaml_file, export_yaml
 import os
-
-
-def read_yaml_file(file_input):
-    ry = YAML()
-    d = ry.read_yaml(file_input)
-    return d
 
 
 def create_cru_string(policy_rule_dict, mk_to_ascii):
@@ -19,13 +13,15 @@ def create_cru_string(policy_rule_dict, mk_to_ascii):
 
     mk_string = 'MK{:03}'.format(int(mk)) if (mk != 'null' and mk is not None) else ''
     if mk_to_ascii and mk_string != '':
-        mk_string = 'MK'+str(bytes.fromhex(hex(int(mk_string[2:]))[2:]), "utf-8")
+        mk_string = 'MK' + str(bytes.fromhex(hex(int(mk_string[2:]))[2:]), "utf-8")
     rg_string = 'RG{:03}'.format(int(rg)) if (rg != 'null' and rg is not None) else ''
     sid_string = 'SID{:03}'.format(int(sid)) if (sid != 'null' and sid is not None) else ''
     method_string = 'CO' if method == 'offline' else 'PP'
     final_string = rg_string + sid_string + mk_string + '_{}'.format(method_string)
     if final_string == "_CO":
         final_string = "RG0_CO"
+    elif final_string == "_PP":
+        final_string = "RG0_PP"
     return final_string
 
 
@@ -41,11 +37,13 @@ def get_charging_rule_unit(policy_rule_yml, mk_to_ascii=True):
     rating_group_pattern = r'RG(\d+)'
     service_id_pattern = r'SID(\d+)'
     monitoring_key_pattern = r'MK(\d+)'
-    lista = list()
+    charging_rule_dict = dict()
 
     for cg in rg_sid_mk_set:
         d = OrderedDict()
-        d['name'] = cg
+        charging_rule_dict.update(
+            {cg: d}
+        )
         d['rating-group'] = int(re.findall(rating_group_pattern, cg)[0]) if re.findall(rating_group_pattern,
                                                                                        cg) else None
         d['service-id'] = int(re.findall(service_id_pattern, cg)[0]) if re.findall(service_id_pattern,
@@ -55,18 +53,12 @@ def get_charging_rule_unit(policy_rule_yml, mk_to_ascii=True):
         d['charging-method'] = 'offline' if cg.endswith('CO') else 'both'
         d['metering-method'] = 'both'
         d['reporting-level'] = 'rating-group' if not re.findall(service_id_pattern, cg) else 'service-id'
-        lista.append(d)
-    return lista
+
+    return charging_rule_dict
 
 
-def export_yaml(lista, project_name='ChargingRuleUnit'):
-    wy = YAML(project_name=project_name)
-    path = wy.write_to_yaml({'ChargingRuleUnit': lista})
-    return path
-
-
-def create_charging_rule_unit_yaml(policy_rule_yaml):
-    return export_yaml(get_charging_rule_unit(policy_rule_yaml))
+def create_charging_rule_unit_yaml(policy_rule_yaml, mk_to_ascii):
+    return export_yaml(get_charging_rule_unit(policy_rule_yaml, mk_to_ascii), 'ChargingRuleUnit')
 
 
 def create_charging_rule_unit_mop(yaml_cru, yaml_template):
@@ -86,40 +78,53 @@ def create_charging_rule_unit_mop(yaml_cru, yaml_template):
 
     list_of_mop_commands = list()
     list_of_mop_commands.append(provision_commands.get('begin'))
-    list_of_charging_rule_units = read_yaml_file(yaml_cru).get('ChargingRuleUnit')
-    for cru in list_of_charging_rule_units:
+    cru_dict = read_yaml_file(yaml_cru).get('ChargingRuleUnit')
+    for cru in cru_dict.keys():
+        cru_parameters = cru_dict.get(cru)
         list_of_mop_commands.append(provision_commands.get('name').format(
-            name=cru.get('name')
+            name=cru
         ))
-        if cru.get('rating-group'):
+        if cru_parameters.get('rating-group') and cru_parameters.get('rg-urr-id'):
+            list_of_mop_commands.append(provision_commands.get('rating-group-sru').format(
+                name=cru,
+                rating_group=cru_parameters.get('rating-group'),
+                sru=f'RG{cru_parameters.get("rg-urr-id"):03}'
+            ))
+        elif cru_parameters.get('rating-group'):
             list_of_mop_commands.append(provision_commands.get('rating-group').format(
-                name=cru.get('name'),
-                rating_group=cru.get('rating-group')
+                name=cru,
+                rating_group=cru_parameters.get('rating-group')
             ))
-        if cru.get('service-id'):
+        if cru_parameters.get('service-id') and cru_parameters.get('service-urr-id'):
+            list_of_mop_commands.append(provision_commands.get('service-id-sru').format(
+                name=cru,
+                service_id=cru_parameters.get('service-id'),
+                sru=cru
+            ))
+        elif cru_parameters.get('service-id'):
             list_of_mop_commands.append(provision_commands.get('service-id').format(
-                name=cru.get('name'),
-                service_id=cru.get('service-id')
+                name=cru,
+                service_id=cru_parameters.get('service-id')
             ))
-        if cru.get('charging-method'):
+        if cru_parameters.get('charging-method'):
             list_of_mop_commands.append(provision_commands.get('charging-method').format(
-                name=cru.get('name'),
-                charging_method=cru.get('charging-method')
+                name=cru,
+                charging_method=cru_parameters.get('charging-method')
             ))
-        if cru.get('metering-method'):
+        if cru_parameters.get('metering-method'):
             list_of_mop_commands.append(provision_commands.get('metering-method').format(
-                name=cru.get('name'),
-                metering_method=cru.get('metering-method')
+                name=cru,
+                metering_method=cru_parameters.get('metering-method')
             ))
-        if cru.get('monitoring-key'):
+        if cru_parameters.get('monitoring-key'):
             list_of_mop_commands.append(provision_commands.get('monitoring-key').format(
-                name=cru.get('name'),
-                monitoring_key=cru.get('monitoring-key')
+                name=cru,
+                monitoring_key=cru_parameters.get('monitoring-key')
             ))
-        if cru.get('reporting-level'):
+        if cru_parameters.get('reporting-level'):
             list_of_mop_commands.append(provision_commands.get('reporting-level').format(
-                name=cru.get('name'),
-                reporting_level=cru.get('reporting-level')
+                name=cru,
+                reporting_level=cru_parameters.get('reporting-level')
             ))
 
     list_of_mop_commands.append(provision_commands.get('commit'))
@@ -132,11 +137,15 @@ def create_charging_rule_unit_mop(yaml_cru, yaml_template):
 
 
 def main():
-    yaml_cru = create_charging_rule_unit_yaml(r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml')
+    # yaml_cru = create_charging_rule_unit_yaml(
+    #     r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml',
+    #     mk_to_ascii=True)
     yaml_template = os.path.abspath(
         r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\templates\charging_rule_unit_commands.yaml')
 
-    create_charging_rule_unit_mop(yaml_cru, yaml_template)
+    create_charging_rule_unit_mop(
+        r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\cmgYAML\ChargingRuleUnit.yaml',
+        yaml_template)
 
 
 if __name__ == "__main__":
