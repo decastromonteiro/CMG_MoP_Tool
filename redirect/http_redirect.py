@@ -123,7 +123,7 @@ def create_http_redirect_mop(http_redirect_yaml, http_redirect_template):
             fout.write(command)
             fout.write('\n')
 
-    return os.path.abspath('mop_app_filter.txt')
+    return os.path.abspath('mop_http_redirect.txt')
 
 
 def create_aqp_http_redirect_mop(aqp_http_redirect_yaml, http_redirect_template):
