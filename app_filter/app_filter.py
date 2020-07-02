@@ -23,10 +23,13 @@ def create_rule_precedence_dict(policy_rule_yaml):
     rule_precedence_dict = dict()
     for key in policy_rule_dict:
         rule_precedence_dict.update({key: policy_rule_dict.get(key).get('precedence')})
-        if policy_rule_dict.get(key).get('pcc-filter-base-name').lower() != 'null':
-            rule_precedence_dict.update(
-                {policy_rule_dict.get(key).get('pcc-filter-base-name'): policy_rule_dict.get(key).get('precedence')})
-
+        try:
+            if policy_rule_dict.get(key).get('pcc-filter-base-name').lower() != 'null':
+                rule_precedence_dict.update(
+                    {policy_rule_dict.get(key).get('pcc-filter-base-name'): policy_rule_dict.get(key).get(
+                        'precedence')})
+        except:
+            print(key)
     return rule_precedence_dict
 
 
@@ -149,56 +152,58 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
         entry_number += 10
     # app-filter from FILTER_BASE
     for key in filter_base_dict:
-        filter_dict = filter_base_dict.get(key)
-        for filter_name in filter_dict:
-            if not (filter_dict.get(filter_name).get('destination-address') or filter_dict.get(filter_name).get(
-                    'ipv6-destination-address') or filter_dict.get(filter_name).get('source-address') or
-                    filter_dict.get(filter_name).get('ipv6-source-address')):
-                ip_protocol = filter_dict.get(filter_name).get('protocol-id')
+        try:
+            if not filter_base_dict.get(key).pop('SPI'):
+                filter_dict = filter_base_dict.get(key)
+                for filter_name in filter_dict:
+                    if not (filter_dict.get(filter_name).get('destination-address') or filter_dict.get(filter_name).get(
+                            'ipv6-destination-address') or filter_dict.get(filter_name).get('source-address') or
+                            filter_dict.get(filter_name).get('ipv6-source-address')):
+                        ip_protocol = filter_dict.get(filter_name).get('protocol-id')
 
-                port = filter_dict.get(filter_name).get('destination-port-list')
-                if port:
-                    if ',' in port:
-                        port = ','.join(sorted(port.split(',')))
-                    port = port_list_dict.get(port, port)
-                host = filter_dict.get(filter_name).get('host-name')
-                uri = filter_dict.get(filter_name).get('l7-uri') if not filter_dict.get(filter_name).get('l7-uri',
-                                                                                                         '0000').endswith(
-                    ':') else None
-                protocol = filter_dict.get(filter_name).get('l7-uri') if filter_dict.get(filter_name).get('l7-uri',
-                                                                                                          '0000').endswith(
-                    ':') else None
-                domain = filter_dict.get(filter_name).get('domain-name')
-                application = key
-                entry_number, entries_application_dict = calculate_entry_number(
-                    rule_precedence_dict=rule_precedence_dict,
-                    application=application,
-                    entries_used=entries_used,
-                    entries_application_dict=entries_application_dict)
-                app_filter_dict.update(
-                    {
-                        entry_number: {'ip-protocol-num': ip_protocol,
-                                       'server-port': {
-                                           'port': port if not port_list_dict.get(port) else None,
-                                           'port-list': port_list_dict.get(port)
-                                       },
-                                       'expression': {
-                                           'http-host': host,
-                                           'http-uri': uri
-                                       },
-                                       'server-address': {
-                                           'ip-prefix-list': None,
-                                           'dns-ip-cache': dns_ip_cache.get(domain),
-                                           'domain-name': domain,
-                                           'ip-address': None
-                                       },
-                                       'application': application,
-                                       'protocol': protocol
-                                       }
-                    }
-                )
+                        port = filter_dict.get(filter_name).get('destination-port-list')
+                        if port:
+                            if ',' in port:
+                                port = ','.join(sorted(port.split(',')))
+                            port = port_list_dict.get(port, port)
+                        host = filter_dict.get(filter_name).get('host-name')
+                        uri = filter_dict.get(filter_name).get('l7-uri')
+                        # if not filter_dict.get(filter_name).get('l7-uri','0000').endswith(':') else None
+                        protocol = filter_dict.get(filter_name).get('signature')
+                        #    if filter_dict.get(filter_name).get('l7-uri', '0000').endswith(':') else None
+                        domain = filter_dict.get(filter_name).get('domain-name')
+                        application = key
+                        entry_number, entries_application_dict = calculate_entry_number(
+                            rule_precedence_dict=rule_precedence_dict,
+                            application=application,
+                            entries_used=entries_used,
+                            entries_application_dict=entries_application_dict)
+                        app_filter_dict.update(
+                            {
+                                entry_number: {'ip-protocol-num': ip_protocol,
+                                               'server-port': {
+                                                   'port': port if not port_list_dict.get(port) else None,
+                                                   'port-list': port_list_dict.get(port)
+                                               },
+                                               'expression': {
+                                                   'http-host': host,
+                                                   'http-uri': uri
+                                               },
+                                               'server-address': {
+                                                   'ip-prefix-list': None,
+                                                   'dns-ip-cache': dns_ip_cache.get(domain),
+                                                   'domain-name': domain,
+                                                   'ip-address': None
+                                               },
+                                               'application': application,
+                                               'protocol': protocol
+                                               }
+                            }
+                        )
 
-                entry_number += 10
+                        entry_number += 10
+        except:
+            print(key)
     # app-filter from FILTERS
     for key in policy_rule_filter_dict:
         for filter_name in policy_rule_filter_dict.get(key):
@@ -326,11 +331,12 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
             )
 
         if app_filter_dict.get(entry).get('ip-protocol-num') != '0':
-            list_of_commands.append(
-                provision_commands.get('ip_protocol').format(partition='1:1', entry=entry,
-                                                             ip_protocol=app_filter_dict.get(entry).get(
-                                                                 'ip-protocol-num'))
-            )
+            if app_filter_dict.get(entry).get('ip-protocol-num'):
+                list_of_commands.append(
+                    provision_commands.get('ip_protocol').format(partition='1:1', entry=entry,
+                                                                 ip_protocol=app_filter_dict.get(entry).get(
+                                                                     'ip-protocol-num'))
+                )
 
         if app_filter_dict.get(entry).get('server-port').get('port'):
             list_of_commands.append(
