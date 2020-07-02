@@ -1,0 +1,8 @@
+commands:
+  provision:
+    begin: '/configure mobile-gateway profile policy-options begin'
+    add_sru: '/configure mobile-gateway profile policy-options sru-list "{sru_list}" stat-rule-unit "{sru}"'
+    commit: '/configure mobile-gateway profile policy-options commit'
+  rollback:
+    remove: null
+    remove_domain: null

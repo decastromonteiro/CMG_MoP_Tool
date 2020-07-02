@@ -1,0 +1,8 @@
+commands:
+  provision:
+    begin: '/configure mobile-gateway profile policy-options begin'
+    create: '/configure mobile-gateway profile policy-options stat-rule-unit {sru} urr-id {urrid} urr-profile "default"'
+    commit: '/configure mobile-gateway profile policy-options commit'
+  rollback:
+    remove: null
+    remove_domain: null
