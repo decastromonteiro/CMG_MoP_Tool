@@ -1,28 +1,17 @@
 import os
 from charging.charging_rule_unit import create_cru_string
-from utils.yaml import YAML
+from utils.yaml import read_yaml_file, export_yaml
+from utils.utils import export_mop_file
 import re
 
 
-def read_yaml_file(file_input):
-    ry = YAML()
-    d = ry.read_yaml(file_input)
-    return d
-
-
-def export_yaml(data, project_name='PolicyRule'):
-    wy = YAML(project_name=project_name)
-    path = wy.write_to_yaml({project_name: data})
-    return path
-
-
-def create_pr_to_charging_rule(policy_rule_yaml):
+def create_pr_to_charging_rule(policy_rule_yaml, mk_to_ascii):
     policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
 
     output_dict = dict()
 
     for key in policy_rule_dict:
-        final_string = create_cru_string(policy_rule_dict.get(key), mk_to_ascii=True)
+        final_string = create_cru_string(policy_rule_dict.get(key), mk_to_ascii)
 
         output_dict.update(
             {key: final_string}
@@ -31,46 +20,52 @@ def create_pr_to_charging_rule(policy_rule_yaml):
     return output_dict
 
 
-def create_policy_rule_unit_yaml(policy_rule_yaml):
-    flow_gate_status_dict = {'charge-v': 'allow', 'pass': 'allow', 'drop': 'drop', 'deny': 'drop'}
-    policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
+def create_policy_rule_unit_yaml(policy_rule_yaml, unique_pru_yaml, pdr_yaml):
+    flow_gate_status_dict = {'charge-v': 'allow', 'pass': 'allow', 'drop': 'drop', 'deny': 'drop', 'redirect': 'allow'}
+    unique_pru_dict = read_yaml_file(unique_pru_yaml, 'UniquePolicyRuleUnit')
+    policy_rule_dict = read_yaml_file(policy_rule_yaml, 'PolicyRule')
+    if pdr_yaml:
+        pdr_dict = read_yaml_file(pdr_yaml, 'PDR')
+    else:
+        pdr_dict = None
     policy_rule_unit_dict = dict()
 
-    for key in policy_rule_dict:
-        fb = policy_rule_dict.get(key).get('pcc-filter-base-name')
-        if not fb or fb == 'null':
-            policy_rule = key
-        else:
-            policy_rule = fb
-        flow_gate_status = policy_rule_dict.get(key).get('pcc-rule-action')
-        policy_rule_unit_dict.update(
-            {policy_rule + '_PRU': {'aa-charging-group': policy_rule,
-                                    'flow-gate-status': flow_gate_status_dict.get(flow_gate_status, flow_gate_status)}
-             }
-        )
+    for policy_rule in policy_rule_dict.keys():
+        filter_base = policy_rule_dict.get(policy_rule).get('pcc-filter-base-name')
+        flow_gate_status = policy_rule_dict.get(policy_rule).get('pcc-rule-action')
+        concat = f"{filter_base}{flow_gate_status}"
+        if not unique_pru_dict.get(concat).startswith('SPI'):
+            pru_name = unique_pru_dict.get(concat)
+            policy_rule_unit_dict.update(
+                {pru_name: {'aa-charging-group': filter_base,
+                            'flow-gate-status': flow_gate_status_dict.get(flow_gate_status,
+                                                                          flow_gate_status),
+                            }
+                 }
+            )
+            if pdr_dict:
+                policy_rule_unit_dict[pru_name]['pdr-id'] = pdr_dict.get(pru_name)
 
     return export_yaml(policy_rule_unit_dict, project_name='PolicyRuleUnit')
 
 
-def create_policy_rule_yaml(policy_rule_yaml):
-    policy_rule_dict = read_yaml_file(policy_rule_yaml).get('PolicyRule')
-
+def create_policy_rule_yaml(policy_rule_yaml, unique_pru_yaml, mk_to_ascii):
+    policy_rule_dict = read_yaml_file(policy_rule_yaml, 'PolicyRule')
+    unique_pru_dict = read_yaml_file(unique_pru_yaml, 'UniquePolicyRuleUnit')
     output_policy_rule_dict = dict()
-    pr_to_cru_dict = create_pr_to_charging_rule(policy_rule_yaml)
+    pr_to_cru_dict = create_pr_to_charging_rule(policy_rule_yaml, mk_to_ascii)
 
-    for key in policy_rule_dict:
-        fb = policy_rule_dict.get(key).get('pcc-filter-base-name')
-        if not fb or fb == 'null':
-            policy_rule_unit = key + '_PRU'
-        else:
-            policy_rule_unit = fb + '_PRU'
+    for policy_rule in policy_rule_dict.keys():
+        filter_base = policy_rule_dict.get(policy_rule).get('pcc-filter-base-name')
+        flow_gate_status = policy_rule_dict.get(policy_rule).get('pcc-rule-action')
+        concat = f"{filter_base}{flow_gate_status}"
         output_policy_rule_dict.update(
             {
-                key: {
-                    'policy-rule-unit': policy_rule_unit,
-                    'charging-rule-unit': pr_to_cru_dict.get(key),
-                    'precedence': policy_rule_dict.get(key).get('precedence'),
-                    'action-rule-unit': policy_rule_dict.get(key).get('qos-profile-name')
+                policy_rule: {
+                    'policy-rule-unit': unique_pru_dict.get(concat),
+                    'charging-rule-unit': pr_to_cru_dict.get(policy_rule),
+                    'precedence': policy_rule_dict.get(policy_rule).get('precedence'),
+                    'action-rule-unit': policy_rule_dict.get(policy_rule).get('qos-profile-name')
                 }
             }
         )
@@ -100,6 +95,10 @@ def create_policy_rule_unit_mop(policy_rule_unit_yaml, policy_rule_commands_temp
         pr_base_commands.append(provision_command_dict.get('flow-gate-status').format(
             policy_rule_unit=key, flow_gate_status=pru_dict.get(key).get('flow-gate-status')
         ))
+        if pru_dict.get(key).get('pdr-id'):
+            pr_base_commands.append(provision_command_dict.get('rule_unit_pdrid').format(
+                policy_rule_unit=key, pdr_id=pru_dict.get(key).get('pdr-id')
+            ))
     pr_base_commands.append(provision_command_dict.get('commit'))
 
     with open('mop_policy_rule_unit.txt', 'w') as fout:
@@ -130,12 +129,33 @@ def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
         )
     pr_base_commands.append(provision_command_dict.get('commit'))
 
-    with open('mop_policy_rule.txt', 'w') as fout:
-        for command in pr_base_commands:
-            fout.write(command)
-            fout.write('\n')
+    return export_mop_file('mop_policy_rule', pr_base_commands)
 
-    return os.path.abspath('mop_policy_rule.txt')
+
+def create_policy_rule_upf_mop(policy_rule_yaml, policy_rule_commands_template, sru_list_yaml):
+    policy_rule_dict = read_yaml_file(policy_rule_yaml).get('CMGPolicyRule')
+    sru_list_dict = read_yaml_file(sru_list_yaml, 'SRUList')
+    provision_command_dict = read_yaml_file(policy_rule_commands_template).get('commands').get('provision')
+    rg_pattern = r'RG(\d+)'
+    pr_base_commands = list()
+    pr_base_commands.append(provision_command_dict.get('begin'))
+    for key in policy_rule_dict:
+        sru_list = int(re.match(rg_pattern, policy_rule_dict.get(key).get('charging-rule-unit')).group(1))
+        pr_base_commands.append(
+            provision_command_dict.get('rule_upf').format(
+                policy_rule=key,
+                rule_unit=policy_rule_dict.get(key).get('policy-rule-unit'),
+                sru_list=sru_list,
+                precedence=policy_rule_dict.get(key).get('precedence'),
+                action_rule_unit='' if policy_rule_dict.get(key).get(
+                    'action-rule-unit') == 'null' else 'action-rule-unit {}'.format(
+                    policy_rule_dict.get(key).get('action-rule-unit')
+                )
+            )
+        )
+    pr_base_commands.append(provision_command_dict.get('commit'))
+
+    return export_mop_file('mop_policy_rule_upf', pr_base_commands)
 
 
 def create_policy_rule_base_mop(cmg_policy_rule_base_yaml, policy_rule_commands_template):
@@ -165,7 +185,7 @@ def main():
         r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml'
     )
 
-    pr_yaml = create_policy_rule_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml')
+    pr_yaml = create_policy_rule_yaml(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml', True)
 
     create_policy_rule_base_mop(r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRuleBase.yaml',
                                 r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\policy_rule_commands.yaml')
