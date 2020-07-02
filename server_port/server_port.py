@@ -46,6 +46,8 @@ def create_port_list_yaml(policy_rule_yaml, filter_base_yaml, prefix_list_yaml):
                         port_list_set.append(port_lst)
 
     for key in filter_base_dict:
+        if filter_base_dict.get(key).pop('SPI'):
+            continue
         filter_dict = filter_base_dict.get(key)
         for filter_name in filter_dict:
             port_string = filter_dict.get(filter_name).get('destination-port-list')
