@@ -1,29 +1,24 @@
 import os
 
 from utils.utils import create_rule_filter_dict
-from utils.yaml import YAML
-from app_filter.app_filter import create_filter_base_rule_dict
+from utils.yaml import read_yaml_file, export_yaml
 
 
-def read_yaml_file(file_input):
-    ry = YAML()
-    d = ry.read_yaml(file_input)
-    return d
-
-
-def export_yaml(data, project_name='DnsIpCache'):
-    wy = YAML(project_name=project_name)
-    path = wy.write_to_yaml({'DnsIpCache': data})
-    return path
-
-
-def create_dns_yaml(policy_rule_yaml, filter_base_yaml):
+def create_dns_yaml(policy_rule_yaml, filter_base_yaml, spid):
+    """
+    :param policy_rule_yaml:
+    :param filter_base_yaml:
+    :param spid: SPI for domain-names
+    :return:
+    """
     policy_rule_domain_dict = dict()
     policy_rule_filter_dict = create_rule_filter_dict(policy_rule_yaml)
     filter_base_dict = read_yaml_file(filter_base_yaml).get('FilterBase')
 
     for key in filter_base_dict:
         filter_dict = filter_base_dict.get(key)
+        if spid and filter_base_dict.get(key).pop('SPI'):
+            continue
         for filter_name in filter_dict:
             domain = filter_dict.get(filter_name).get('domain-name')
             if domain:
@@ -50,7 +45,8 @@ def create_dns_yaml(policy_rule_yaml, filter_base_yaml):
                         policy_rule_domain_dict.get(key).append(
                             domain
                         )
-    return export_yaml({'DefaultLayer3Layer7': {'ip-cache-size': 64000, 'domains': policy_rule_domain_dict}})
+    return export_yaml({'DefaultLayer3Layer7': {'ip-cache-size': 64000, 'domains': policy_rule_domain_dict}},
+                       'DnsIpCache')
 
 
 def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
@@ -103,11 +99,7 @@ def create_dns_mop(dns_entries_yaml, dns_commands_yaml):
 
 
 def main():
-    path = create_dns_yaml(
-        policy_rule_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\PolicyRule.yaml',
-        filter_base_yaml=r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\parsers\FilterBase.yaml')
-
-    create_dns_mop(path, r'C:\Users\ledecast\PycharmProjects\CMG_MoP_Tool\templates\dns_ip_cache_commands.yaml')
+    pass
 
 
 if __name__ == '__main__':
