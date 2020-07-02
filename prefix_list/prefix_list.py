@@ -1,6 +1,8 @@
 from utils.yaml import YAML
-from utils.utils import create_rule_filter_dict
+from utils.utils import chuncks, get_filter_base, get_filter
 import os
+import ipaddress
+import re
 
 
 def read_yaml_file(file_input):
@@ -13,69 +15,6 @@ def export_yaml(lista, project_name='PrefixList'):
     wy = YAML(project_name=project_name)
     path = wy.write_to_yaml({'PrefixList': lista})
     return path
-
-
-def get_filter_base(filter_base_yaml):
-    filter_base_list = read_yaml_file(filter_base_yaml).get('FilterBase')
-    if filter_base_list:
-        return aggregate_address(filter_base_list)
-    return None
-
-
-def get_filter(policy_rule_yaml):
-    policy_rule_filters = create_rule_filter_dict(policy_rule_yaml)
-    if policy_rule_filters:
-        return aggregate_address(policy_rule_filters)
-    return None
-
-
-def aggregate_address(input_dict):
-    if input_dict:
-        aggregation_list = dict()
-        for key in input_dict:
-
-            list_of_filters_dict = input_dict.get(key)
-            aggregate_addresses = dict()
-            filter_base_aggregation = dict()
-            for filter_name in list_of_filters_dict:
-                if list_of_filters_dict.get(filter_name).get('destination-address') or list_of_filters_dict.get(
-                        filter_name).get('ipv6-destination-address'):
-                    address = None
-                    aggregation_string = None
-                    if list_of_filters_dict.get(filter_name).get('destination-address'):
-                        address = list_of_filters_dict.get(filter_name).get('destination-address')
-                        aggregation_string = 'v4Protocol{}Port{}Domain{}Host{}URI{}'
-                    elif list_of_filters_dict.get(filter_name).get('ipv6-destination-address'):
-                        address = list_of_filters_dict.get(filter_name).get('ipv6-destination-address')
-                        aggregation_string = 'v6Protocol{}Port{}Domain{}Host{}URI{}'
-
-                    protocol = list_of_filters_dict.get(filter_name).get('protocol-id', '0000')
-                    ports = list_of_filters_dict.get(filter_name).get('destination-port-list', '0000')
-                    domain = list_of_filters_dict.get(filter_name).get('domain-name', '0000')
-                    host = list_of_filters_dict.get(filter_name).get('host-name', '0000')
-                    uri = list_of_filters_dict.get(filter_name).get('l7-uri', '0000')
-
-                    protocol = protocol if protocol else '0000'
-                    ports = ports if ports else '0000'
-                    domain = domain if domain else '0000'
-                    host = host if host else '0000'
-                    uri = uri if uri else '0000'
-
-                    aggregation_string = aggregation_string.format(protocol, ports, domain, host, uri)
-
-                    if not aggregate_addresses.get(aggregation_string):
-                        aggregate_addresses.update({aggregation_string: list()})
-                    if address:
-                        aggregate_addresses.get(aggregation_string).append(address)
-
-            filter_base_aggregation.update({key: aggregate_addresses})
-            aggregation_list.update(filter_base_aggregation)
-        return aggregation_list
-
-
-def chuncks(lista, size):
-    for i in range(0, len(lista), size):
-        yield lista[i:i + size]
 
 
 def create_prefix_list_yaml(policy_rule_yaml, filter_base_yaml):
