@@ -4,8 +4,12 @@ commands:
     name: '/configure mobile-gateway profile policy-options charging-rule-unit {name}'
     rating-group: '/configure mobile-gateway profile policy-options charging-rule-unit {name} rating-group
     {rating_group}'
+    rating-group-sru: '/configure mobile-gateway profile policy-options charging-rule-unit {name} rating-group
+    {rating_group} sru {sru}'
     service-id: '/configure mobile-gateway profile policy-options charging-rule-unit {name} service-identifier
     {service_id}'
+    service-id-sru: '/configure mobile-gateway profile policy-options charging-rule-unit {name} service-identifier
+    {service_id} sru {sru}'
     charging-method: '/configure mobile-gateway profile policy-options charging-rule-unit {name} charging-method
     {charging_method}'
     metering-method: '/configure mobile-gateway profile policy-options charging-rule-unit {name} metering-method

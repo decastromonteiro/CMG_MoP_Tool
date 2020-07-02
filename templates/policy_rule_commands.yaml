@@ -9,10 +9,13 @@ commands:
     rule_unit_ip: '/configure mobile-gateway profile policy-options policy-rule-unit {policy_rule_unit} flow-description {flow_description_number} match remote-ip {ip}'
     rule_unit_dns: 'configure mobile-gateway profile policy-options policy-rule-unit {policy_rule_unit} flow-description {flow_description_number} match dns-snooping {fqdn_list_name}'
     rule_unit_port: '/configure mobile-gateway profile policy-options policy-rule-unit {policy_rule_unit} flow-description {flow_description_number} match remote-port {port}'
+    rule_unit_pdrid: '/configure mobile-gateway profile policy-options policy-rule-unit {policy_rule_unit} pdr-id {pdr_id}'
     flow-gate-status: '/configure mobile-gateway profile policy-options policy-rule-unit "{policy_rule_unit}" flow-gate-status {flow_gate_status}'
     create_aru: '/configure mobile-gateway profile policy-options action-rule-unit {aru_name} characteristic {aso} value {aso_value}'
     rule: '/configure mobile-gateway profile policy-options policy-rule {policy_rule} policy-rule-unit "{rule_unit}"
     charging-rule-unit "{charging_rule_unit}" precedence {precedence} {action_rule_unit}'
+    rule_upf: '/configure mobile-gateway profile policy-options policy-rule {policy_rule} policy-rule-unit "{rule_unit}"
+                  stat-rule-unit-list "{sru_list}" precedence {precedence} {action_rule_unit}'
     rule_base: '/configure mobile-gateway profile policy-options policy-rule-base {policy_rule_base} policy-rule {policy_rule}'
     rule_base_aa_adv: '/configure mobile-gateway profile policy-options policy-rule-base {policy_rule_base} aa-adv-functions characteristic {aso} value {aso_value}'
     commit: '/configure mobile-gateway profile policy-options commit'

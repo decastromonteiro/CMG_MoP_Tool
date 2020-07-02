@@ -1,8 +1,8 @@
 commands:
   provision:
-    add_domain: 'configure mobile-gateway profile list fqdn-list {fqdn_list_name} fqdn {fqdn_name_id} {fqdn_name_string}'
-    enable_apn: 'configure mobile pdn gw-id apn apn-name dns-snooping {dns-server-list addr-list} {snoop-all}'
-    enable_fwd_aa: 'configure mobile pdn gw-id apn {apn-name} dns-snooping-forward-to-aa'
+    add_domain: '/configure mobile-gateway profile list fqdn-list {fqdn_list_name} fqdn {fqdn_name_id} {fqdn_name_string}'
+    enable_apn: '/configure mobile pdn gw-id apn apn-name dns-snooping {dns-server-list addr-list} {snoop-all}'
+    enable_fwd_aa: '/configure mobile pdn gw-id apn {apn-name} dns-snooping-forward-to-aa'
   rollback:
     remove: null
     remove_domain: null
