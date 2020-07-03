@@ -217,9 +217,9 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
     http_redirect_yaml = create_redirect_yaml(create_rule_redirect_dict(policy_rule_yaml=policy_rule_yaml))
     aqp_http_redirect_yaml = create_redirect_aqp_yaml(http_redirect_yaml=http_redirect_yaml)
     if cisco_he:
-        he_template_cisco = os.path.abspath(os.path.join(cisco_yaml_dir, 'CiscoHETemplate.yaml'))
-        charging_action_yaml = os.path.abspath(os.path.join(cisco_yaml_dir, 'ChargingActionCisco.yaml'))
-        unique_template_yaml = os.path.abspath(os.path.join(cisco_yaml_dir, 'UniqueHETemplate.yaml'))
+        he_template_cisco = os.path.join(cisco_yaml_dir, 'CiscoHETemplate.yaml')
+        charging_action_yaml = os.path.join(cisco_yaml_dir, 'ChargingActionCisco.yaml')
+        unique_template_yaml = os.path.join(cisco_yaml_dir, 'UniqueHETemplate.yaml')
         he_templates_yaml = create_he_template_yaml_cisco(he_template_cisco, charging_action_yaml, unique_template_yaml)
         header_enrichment_yaml = create_header_enrichment_yaml_cisco(policy_rule_yaml)
     else:
