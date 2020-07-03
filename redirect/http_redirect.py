@@ -41,7 +41,7 @@ def create_redirect_yaml(rule_redirect_dict, aso='REDIRECT', template=3):
 
 def create_redirect_aqp_yaml(http_redirect_yaml, entry=13000, default_charging_group='default',
                              redirect_app_group='REDIRECT'):
-    pattern = re.compile(r'(.+)--\d+')
+    pattern = re.compile(r'(.+)---\d+')
 
     http_redirect_dict = read_yaml_file(http_redirect_yaml).get('HTTP-Redirect')
     aqp_redirect_dict = dict()
