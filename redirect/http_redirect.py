@@ -1,19 +1,8 @@
 import os
 
-from utils.yaml import YAML
+from utils.yaml import read_yaml_file, export_yaml
+from utils.utils import export_mop_file
 import re
-
-
-def read_yaml_file(file_input):
-    ry = YAML()
-    d = ry.read_yaml(file_input)
-    return d
-
-
-def export_yaml(data, project_name='AppFilter'):
-    wy = YAML(project_name=project_name)
-    path = wy.write_to_yaml({project_name: data})
-    return path
 
 
 def create_rule_redirect_dict(policy_rule_yaml):
@@ -118,12 +107,7 @@ def create_http_redirect_mop(http_redirect_yaml, http_redirect_template):
         if http_redirect_dict.get(entry).get('client-reset'):
             list_of_commands.append(provision_commands.get('client_reset').format(http_redirect_name=entry)
                                     )
-    with open('mop_http_redirect.txt', 'w') as fout:
-        for command in list_of_commands:
-            fout.write(command)
-            fout.write('\n')
-
-    return os.path.abspath('mop_http_redirect.txt')
+    return export_mop_file('aa_http_redirect', list_of_commands)
 
 
 def create_aqp_http_redirect_mop(aqp_http_redirect_yaml, http_redirect_template):
@@ -201,28 +185,11 @@ def create_aqp_http_redirect_mop(aqp_http_redirect_yaml, http_redirect_template)
     list_of_commands.append(
         provision_commands.get('aa_commit').format(partition='1:1')
     )
-    with open('mop_aqp_http_redirect.txt', 'w') as fout:
-        for command in list_of_commands:
-            fout.write(command)
-            fout.write('\n')
-
-    return os.path.abspath('mop_aqp_http_redirect.txt')
+    return export_mop_file('aa_aqp_http_redirect', list_of_commands)
 
 
 def main():
-    create_aqp_http_redirect_mop(
-        create_redirect_aqp_yaml(
-            create_redirect_yaml(
-                create_rule_redirect_dict(
-                    r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml')
-            )
-        ),
-        r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\templates\http_redirect.yaml')
-
-    create_http_redirect_mop(create_redirect_yaml(
-        create_rule_redirect_dict(
-            r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\BaseYAML\PolicyRule.yaml')
-    ), r'C:\Users\ledecast\OneDrive - Nokia\Projetos\Python\PycharmProjects\CMG_MoP_Tool\templates\http_redirect.yaml')
+    pass
 
 
 if __name__ == "__main__":

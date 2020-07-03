@@ -384,7 +384,7 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
         provision_commands.get('commit').format(partition='1:1')
     )
 
-    return export_mop_file('aa_app_filter_mop', provision_commands)
+    return export_mop_file('aa_app_filter_mop', list_of_commands)
 
 
 def main():
