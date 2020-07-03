@@ -187,7 +187,7 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
         sru_yaml = create_stat_rule_unit_yaml(charging_yaml)
         sru_list_yaml = create_sru_list_yaml(sru_yaml)
         output_dict['SRU'] = sru_yaml
-        output_dict['SRUList'] = sru_list_yaml
+        output_dict['SRU List'] = sru_list_yaml
         output_dict['PDR'] = pdr_yaml
     else:
         pdr_yaml = None
@@ -386,7 +386,7 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     redirect_templates_mop = create_http_redirect_mop(http_redirect_yaml, redirect_commands)
     redirect_aqp_mop = create_aqp_http_redirect_mop(aqp_redirect_yaml, redirect_commands)
 
-    output_dict['ApplicationMOP'] = application_mop
+    output_dict['Application MoP'] = application_mop
     output_dict['Charging MoP'] = charging_mop
     output_dict['AA PortList MoP'] = port_list_mop
     output_dict['AA Prefix MoP'] = prefix_mop
@@ -432,7 +432,7 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
                                                 policy_rule_commands_template=pr_commands)
 
         output_dict['SRU MoP'] = sru_mop
-        output_dict['SRUList MoP'] = sru_list_mop
+        output_dict['SRU List MoP'] = sru_list_mop
         output_dict['PR UPF MoP'] = pr_upf_mop
 
     return output_dict
@@ -524,7 +524,7 @@ def main():
             print(f"{key}: {path_dict.get(key)}")
         return
     elif args.cmgYAML:
-        print("When inputing cmgYAML please provide Templates as well.")
+        print("When inputting cmgYAML please provide Templates as well.")
         return
     else:
         print('If you have doubts on how to use this tool, please run it with --help command.')
