@@ -165,36 +165,53 @@ def check_name_lenghts(cmg_policy_rule_yaml, prefix_list_yaml, dns_ip_cache_yaml
         if len(policy_rule_name) > policy_rule_max_length:
             print(
                 'WARNING: The Policy-Rule: {} has a bigger name than {} chars, '
-                'please review it and change it accordingly.'.format(policy_rule_name, policy_rule_max_length))
+                'please review it and change it accordingly. '
+                'Its current length is {} chars.'.format(policy_rule_name, policy_rule_max_length, len(
+                    policy_rule_name)))
 
     for prefix_name in prefix_list_dict:
         if len(prefix_name) > prefix_max_length:
             print(
                 'WARNING: The Prefix-List: {} has a bigger name than {} chars, '
-                'please review it and change it accordingly.'.format(prefix_name, prefix_max_length))
+                'please review it and change it accordingly.'
+                'Its current length is {} chars.'.format(prefix_name, prefix_max_length, len(prefix_name)))
 
     for dns_name in dns_ip_cache_dict:
         if len(dns_name) > prefix_max_length:
             print(
                 'WARNING: The DNS-IP-Cache: {} has a bigger name than {} chars, '
-                'please review it and change it accordingly.'.format(dns_name, dns_ip_cache_max_length))
+                'please review it and change it accordingly.'
+                'Its current length is {} chars.'.format(dns_name, dns_ip_cache_max_length, len(dns_name)))
 
     for pru_name in policy_rule_unit_dict:
         if len(pru_name) > prefix_max_length:
             print(
                 'WARNING: The Policy-Rule-Unit: {} has a bigger name than {} chars, '
-                'please review it and change it accordingly.'.format(pru_name, policy_rule_unit_max_length))
+                'please review it and change it accordingly.'
+                'Its current length is {} chars.'.format(pru_name, policy_rule_unit_max_length, len(pru_name)))
     if spi_policy_rule_unit_yaml:
         for pru_name in spi_policy_rule_unit_dict:
             if len(pru_name) > prefix_max_length:
                 print(
                     'WARNING: The Policy-Rule-Unit: {} has a bigger name than {} chars, '
-                    'please review it and change it accordingly.'.format(pru_name, policy_rule_unit_max_length))
+                    'please review it and change it accordingly.'
+                    'Its current length is {} chars.'.format(pru_name, policy_rule_unit_max_length, len(pru_name)))
     for application in application_dict:
         if len(application) > prefix_max_length:
             print(
                 'WARNING: The Application: {} has a bigger name than {} chars, '
-                'please review it and change it accordingly.'.format(application, application_max_length))
+                'please review it and change it accordingly.'
+                'Its current length is {} chars.'.format(application, application_max_length, len(application)))
+
+
+def check_name_length(yaml_input, object_name, max_len):
+    object_dict = read_yaml_file(yaml_input, object_name)
+    for _object in object_dict:
+        if len(_object) > max_len:
+            print(f"WARNING: The {object_name}: {_object} has a bigger name than {max_len} chars, "
+                  f"please review it and change it accordingly."
+                  f"Its current length is {len(_object)} chars.")
+
 
 
 def create_rule_filter_dict(policy_rule_yaml):

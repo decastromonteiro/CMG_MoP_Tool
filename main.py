@@ -11,7 +11,7 @@ from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_
     create_policy_rule_upf_mop
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
-from utils.utils import check_name_lenghts, check_spi_rule, create_unique_pru
+from utils.utils import check_name_lenghts, check_spi_rule, create_unique_pru, check_name_length
 from parsers import tmo_cisco_parser as cisco
 from redirect.http_redirect import create_http_redirect_mop, create_redirect_aqp_yaml, create_aqp_http_redirect_mop, \
     create_redirect_yaml, create_rule_redirect_dict
@@ -187,8 +187,11 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
         sru_yaml = create_stat_rule_unit_yaml(charging_yaml)
         sru_list_yaml = create_sru_list_yaml(sru_yaml)
         output_dict['SRU'] = sru_yaml
+        # check_name_length(yaml_input=sru_yaml, object_name='SRU', max_len=32)
         output_dict['SRU List'] = sru_list_yaml
+        # check_name_length(yaml_input=sru_list_yaml, object_name='SRUList', max_len=32)
         output_dict['PDR'] = pdr_yaml
+
     else:
         pdr_yaml = None
     if spid or spip:
@@ -203,8 +206,11 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
                                                         pdr_yaml=pdr_yaml)
         output_dict['SPIPortList'] = spi_port_list_yaml
         output_dict['FQDNList'] = dns_snoop_yaml
+        check_name_length(yaml_input=dns_snoop_yaml, object_name='FQDNList', max_len=32)
         output_dict['SPIPolicyRuleUnit'] = spi_pru_yaml
+        check_name_length(yaml_input=spi_pru_yaml, object_name='SPIPolicyRuleUnit', max_len=32)
         output_dict['AddrList'] = addr_list_yaml
+        check_name_length(yaml_input=addr_list_yaml, object_name='AddrList', max_len=32)
     else:
         spi_pru_yaml = None
 
@@ -228,25 +234,26 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
                                                                he_templates_yaml=he_templates_yaml)
 
     output_dict['ApplicationYAML'] = application_yaml
+    check_name_length(yaml_input=application_yaml, object_name='Application', max_len=32)
     output_dict['ChargingYAML'] = charging_yaml
+    check_name_length(yaml_input=charging_yaml, object_name='ChargingRuleUnit', max_len=32)
     output_dict['HETemplatesYAML'] = he_templates_yaml
+    check_name_length(yaml_input=he_templates_yaml, object_name='HETemplates', max_len=32)
     output_dict['HeaderEnrichmentYAML'] = header_enrichment_yaml
     output_dict['PrefixYAML'] = prefix_yaml
+    check_name_length(yaml_input=prefix_yaml, object_name='PrefixList', max_len=32)
     output_dict['DnsIpCacheYAML'] = dns_ip_cache_yaml
     output_dict['ServerPortYAML'] = server_port_yaml
     output_dict['AppFilterYAML'] = app_filter_yaml
     output_dict['PolicyRuleUnitYAML'] = policy_rule_unit_yaml
+    check_name_length(yaml_input=policy_rule_unit_yaml, object_name='PolicyRuleUnit', max_len=32)
     output_dict['CMGPolicyRule'] = cmg_policy_rule_yaml
+    check_name_length(yaml_input=cmg_policy_rule_yaml, object_name='CMGPolicyRule', max_len=64)
     output_dict['CMGPolicyRuleBase'] = cmg_policy_rule_base_yaml
+    check_name_length(yaml_input=cmg_policy_rule_base_yaml, object_name='CMGPolicyRuleBase', max_len=64)
     output_dict['HTTP-Redirect'] = http_redirect_yaml
+    check_name_length(yaml_input=http_redirect_yaml, object_name='HTTP-Redirect', max_len=32)
     output_dict['AQP-HTTP-Redirect'] = aqp_http_redirect_yaml
-
-    check_name_lenghts(cmg_policy_rule_yaml=cmg_policy_rule_yaml,
-                       prefix_list_yaml=prefix_yaml,
-                       dns_ip_cache_yaml=dns_ip_cache_yaml,
-                       policy_rule_unit_yaml=policy_rule_unit_yaml,
-                       application_yaml=application_yaml,
-                       spi_policy_rule_unit_yaml=spi_pru_yaml)
 
     return output_dict
 
