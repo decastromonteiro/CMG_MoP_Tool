@@ -11,7 +11,7 @@ from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_
     create_policy_rule_upf_mop
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
-from utils.utils import check_name_lenghts, check_spi_rule, create_unique_pru, check_name_length
+from utils.utils import check_spi_rule, create_unique_pru, check_name_length
 from parsers import tmo_cisco_parser as cisco
 from redirect.http_redirect import create_http_redirect_mop, create_redirect_aqp_yaml, create_aqp_http_redirect_mop, \
     create_redirect_yaml, create_rule_redirect_dict
