@@ -267,6 +267,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
     protocol_signature = r'p2p protocol = (.+)'
     http_host = r'http host (.+)'
     tls_sni = r'p2p app-identifier tls-sni (.+)'
+    quic_sni = r'p2p app-identifier quic-sni (.+)'
     ip_server_domain_pattern = r'ip server-domain-name (.+)'
     dst_address_pattern = r'ip dst-address = (.+)'
     www_domain_pattern = r'www domain (.+)'
@@ -287,7 +288,8 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                 dst_address_pattern,
                 www_domain_pattern,
                 http_domain_pattern,
-                www_host_pattern]
+                www_host_pattern,
+                quic_sni]
 
     complex_pattern = re.compile('|'.join([f'({i})' for i in patterns]))
 
@@ -351,7 +353,8 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                                 "port": None,
                                 "signature": match.group(16),
                                 "http-host": pattern_conversion(match.group(18)) or pattern_conversion(
-                                    match.group(20)) or pattern_conversion(match.group(30)),
+                                    match.group(20)) or pattern_conversion(match.group(30)) or pattern_conversion(
+                                    match.group(32)),
                                 "domain-name": pattern_conversion(match.group(22)) or pattern_conversion(
                                     match.group(26)) or pattern_conversion(match.group(28))
                             }}
@@ -367,7 +370,8 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                                 "port": None,
                                 "signature": match.group(16),
                                 "http-host": pattern_conversion(match.group(18)) or pattern_conversion(
-                                    match.group(20)) or pattern_conversion(match.group(30)),
+                                    match.group(20)) or pattern_conversion(match.group(30)) or pattern_conversion(
+                                    match.group(32)),
                                 "domain-name": pattern_conversion(match.group(22)) or pattern_conversion(
                                     match.group(26)) or pattern_conversion(match.group(28))
                             }}
@@ -403,9 +407,10 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                     port = (tcp or udp) if (tcp or udp) else port
                     signature = match.group(16) if match.group(16) else signature
                     http_host = (pattern_conversion(match.group(18)) or pattern_conversion(
-                        match.group(20)) or pattern_conversion(match.group(30))) if (
-                            pattern_conversion(match.group(18)) or pattern_conversion(
-                        match.group(20)) or pattern_conversion(match.group(30))) else http_host
+                        match.group(20)) or pattern_conversion(match.group(30)) or pattern_conversion(
+                        match.group(32))) if (pattern_conversion(match.group(18)) or pattern_conversion(
+                        match.group(20)) or pattern_conversion(match.group(30)) or pattern_conversion(
+                        match.group(32))) else http_host
                     domain_name = (pattern_conversion(match.group(22)) or pattern_conversion(
                         match.group(26)) or pattern_conversion(match.group(28))) if (
                             pattern_conversion(match.group(22)) or pattern_conversion(
@@ -875,4 +880,3 @@ if __name__ == "__main__":
     # filter_base_yaml = check_spi_filter(filter_base_yaml=filter_base_yaml,
     #                                     policy_rule_yaml=policy_rule_yaml,
     #                                     domain_name=True)
-
