@@ -1,4 +1,3 @@
-import os
 from charging.charging_rule_unit import create_cru_string
 from utils.yaml import read_yaml_file, export_yaml
 from utils.utils import export_mop_file
@@ -111,6 +110,8 @@ def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
     pr_base_commands = list()
     pr_base_commands.append(provision_command_dict.get('begin'))
     for key in policy_rule_dict:
+        aru = policy_rule_dict.get(key).get('action-rule-unit')
+        aru = aru if aru and aru != 'null' else None
         pr_base_commands.append(
             provision_command_dict.get('rule').format(
                 policy_rule=key,
@@ -123,9 +124,9 @@ def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
                 )
             )
         )
-    pr_base_commands.append(provision_command_dict.get('commit'))
+        pr_base_commands.append(provision_command_dict.get('commit'))
 
-    return export_mop_file('policy_rule_mop', pr_base_commands)
+        return export_mop_file('policy_rule_mop', pr_base_commands)
 
 
 def create_policy_rule_upf_mop(policy_rule_yaml, policy_rule_commands_template, sru_list_yaml):
@@ -136,6 +137,8 @@ def create_policy_rule_upf_mop(policy_rule_yaml, policy_rule_commands_template, 
     pr_base_commands = list()
     pr_base_commands.append(provision_command_dict.get('begin'))
     for key in policy_rule_dict:
+        aru = policy_rule_dict.get(key).get('action-rule-unit')
+        aru = aru if aru and aru != 'null' else None
         sru_list = int(re.match(rg_pattern, policy_rule_dict.get(key).get('charging-rule-unit')).group(1))
         pr_base_commands.append(
             provision_command_dict.get('rule_upf').format(
@@ -143,15 +146,13 @@ def create_policy_rule_upf_mop(policy_rule_yaml, policy_rule_commands_template, 
                 rule_unit=policy_rule_dict.get(key).get('policy-rule-unit'),
                 sru_list=sru_list,
                 precedence=policy_rule_dict.get(key).get('precedence'),
-                action_rule_unit='' if policy_rule_dict.get(key).get(
-                    'action-rule-unit') == 'null' else 'action-rule-unit {}'.format(
-                    policy_rule_dict.get(key).get('action-rule-unit')
-                )
+                action_rule_unit='action-rule-unit {}'.format(aru) if aru else ''
             )
         )
-    pr_base_commands.append(provision_command_dict.get('commit'))
 
-    return export_mop_file('upf_policy_rule_mop', pr_base_commands)
+        pr_base_commands.append(provision_command_dict.get('commit'))
+
+        return export_mop_file('upf_policy_rule_mop', pr_base_commands)
 
 
 def create_policy_rule_base_mop(cmg_policy_rule_base_yaml, policy_rule_commands_template):
