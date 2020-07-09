@@ -273,7 +273,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
     www_domain_pattern = r'www domain (.+)'
     http_domain_pattern = r'http domain (.+)'
     www_host_pattern = r'www host (.+)'
-
+    http_user_agent_pattern = r'http user-agent (.+)'
     patterns = [ip_address_pattern,
                 host_pool_pattern,
                 www_url_pattern,
@@ -289,7 +289,8 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                 www_domain_pattern,
                 http_domain_pattern,
                 www_host_pattern,
-                quic_sni]
+                quic_sni,
+                http_user_agent_pattern]
 
     complex_pattern = re.compile('|'.join([f'({i})' for i in patterns]))
 
@@ -333,6 +334,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                     "port": port,
                     "signature": None,
                     "http-host": None,
+                    "http-user-agent": None,
                     "domain-name": None
                 }}
                 )
@@ -355,6 +357,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                                 "http-host": pattern_conversion(match.group(18)) or pattern_conversion(
                                     match.group(20)) or pattern_conversion(match.group(30)) or pattern_conversion(
                                     match.group(32)),
+                                "http-user-agent": pattern_conversion(match.group(34)),
                                 "domain-name": pattern_conversion(match.group(22)) or pattern_conversion(
                                     match.group(26)) or pattern_conversion(match.group(28))
                             }}
@@ -372,6 +375,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                                 "http-host": pattern_conversion(match.group(18)) or pattern_conversion(
                                     match.group(20)) or pattern_conversion(match.group(30)) or pattern_conversion(
                                     match.group(32)),
+                                "http-user-agent": pattern_conversion(match.group(34)),
                                 "domain-name": pattern_conversion(match.group(22)) or pattern_conversion(
                                     match.group(26)) or pattern_conversion(match.group(28))
                             }}
@@ -390,6 +394,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
             port = None
             signature = None
             http_host = None
+            http_user_agent = None
             domain_name = None
             for parameter in filters:
                 match = complex_pattern.match(parameter)
@@ -411,6 +416,8 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                         match.group(32))) if (pattern_conversion(match.group(18)) or pattern_conversion(
                         match.group(20)) or pattern_conversion(match.group(30)) or pattern_conversion(
                         match.group(32))) else http_host
+                    http_user_agent = pattern_conversion(match.group(34)) if pattern_conversion(
+                        match.group(34)) else http_user_agent
                     domain_name = (pattern_conversion(match.group(22)) or pattern_conversion(
                         match.group(26)) or pattern_conversion(match.group(28))) if (
                             pattern_conversion(match.group(22)) or pattern_conversion(
@@ -431,6 +438,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                             "port": port,
                             "signature": signature,
                             "http-host": http_host,
+                            "http-user-agent": http_user_agent,
                             "domain-name": domain_name
                         }}
                     )
@@ -444,6 +452,7 @@ def parse_raw_ruledef(raw_rule_def_path, parsed_host_pool_path):
                         "port": port,
                         "signature": signature,
                         "http-host": http_host,
+                        "http-user-agent": http_user_agent,
                         "domain-name": domain_name
                     }}
                 )
