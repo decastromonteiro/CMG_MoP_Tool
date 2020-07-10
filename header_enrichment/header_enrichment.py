@@ -129,8 +129,8 @@ def create_he_template_yaml_cisco(he_template_yaml, charging_action_yaml, unique
         fields_dict = dict()
         for field_id in fields:
             if fields.get(field_id).get('encrypt'):
-                encryption = match.group(2)
-                key = match.group(3)
+                encryption = match.group(2) if match.group(2) else None
+                key = match.group(3) if match.group(3) else None
             else:
                 encryption, key = None, None
             fields_dict.update(
