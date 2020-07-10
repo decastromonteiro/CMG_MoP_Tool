@@ -50,7 +50,11 @@ def create_application_mop(application_yaml_input, command_yaml_input):
              provision_command_list.get('combine_app_cg').format(partition='1:1',
                                                                  application=application,
                                                                  charging_group=application)])
-
+    list_of_commands.append(
+        provision_command_list.get('charging-group').format(partition='1:1', charging_group='default'))
+    list_of_commands.append(
+        provision_command_list.get('default_cg').format(partition='1:1', charging_group='default')
+    )
     list_of_commands.append(provision_command_list.get('commit').format(partition='1:1'))
 
     return export_mop_file('aa_application_mop', list_of_commands)

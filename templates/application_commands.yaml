@@ -8,6 +8,7 @@ commands:
     app-group: '/configure application-assurance group {partition} policy app-group {application} create'
     combine_app_apg: '/configure application-assurance group {partition} policy application "{application}"
                          app-group "{application_group}"'
+    default_cg: '/configure application-assurance group {partition} policy default-charging-group {charging_group}'
     commit: '/configure application-assurance group {partition} policy commit'
   rollback:
     begin: '/configure application-assurance group {partition} policy begin'
