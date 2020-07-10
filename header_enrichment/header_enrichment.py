@@ -94,6 +94,7 @@ def create_header_enrichment_mop(he_template, header_enrichment_yaml, commands_t
                                                                field_name),
                                                            field_name=field_name)
             )
+        list_of_commands.append(provision.get('he_template_no_shut').format(he_name=he_template))
     for pr_name in http_enrich_dict:
         list_of_commands.append(provision.get('create_aqp_entry').format(
             entry=http_enrich_dict.get(pr_name).get('entry')
@@ -174,6 +175,14 @@ def create_he_template_mop_cisco(he_template_yaml, he_template_commands_yaml):
 
                                                                   )
                     )
+                else:
+                    # rc4md5-base64
+                    list_of_commands.append(provision.get(
+                        'key_encode_field').format(he_name=he_template, field=field_parameters.get('field'),
+                                                   encode_type=field_parameters.get('encryption'),
+                                                   encode_key=field_parameters.get('key')))
+
+        list_of_commands.append(provision.get('he_template_no_shut').format(he_name=he_template))
 
     return export_mop_file('he_template_mop', list_of_commands)
 
