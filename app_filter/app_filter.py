@@ -137,6 +137,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                                'expression': {
                                    'http-host': host if host != '0000' else None,
                                    'http-uri': uri if uri != '0000' else None,
+                                   'http-user-agent': None,
                                },
                                'server-address': {
                                    'ip-prefix-list': key,
@@ -173,6 +174,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                         #    if filter_dict.get(filter_name).get('l7-uri', '0000').endswith(':') else None
                         domain = filter_dict.get(filter_name).get('domain-name')
                         application = key
+                        user_agent = filter_dict.get(filter_name).get('http-user-agent')
                         entry_number, entries_application_dict = calculate_entry_number(
                             rule_precedence_dict=rule_precedence_dict,
                             application=application,
@@ -187,7 +189,8 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                                                },
                                                'expression': {
                                                    'http-host': host,
-                                                   'http-uri': uri
+                                                   'http-uri': uri,
+                                                   'http-user-agent': user_agent
                                                },
                                                'server-address': {
                                                    'ip-prefix-list': None,
@@ -223,6 +226,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                     ':') else None
                 domain = filter_dict.get('domain-name')
                 application = key
+                user_agent = filter_dict.get(filter_name).get('http-user-agent')
                 entry_number, entries_application_dict = calculate_entry_number(
                     rule_precedence_dict=rule_precedence_dict,
                     application=application,
@@ -237,7 +241,8 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                                        },
                                        'expression': {
                                            'http-host': host,
-                                           'http-uri': uri
+                                           'http-uri': uri,
+                                           'http-user-agent': user_agent
                                        },
                                        'server-address': {
                                            'ip-prefix-list': None,
@@ -370,6 +375,16 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
             list_of_commands.append(
                 provision_commands.get('http-uri').format(partition='1:1', entry=entry,
                                                           http_uri=uri)
+            )
+        if app_filter_dict.get(entry).get('expression').get('http-user-agent'):
+            user_agent = app_filter_dict.get(entry).get('expression').get('http-user-agent')
+            if not user_agent.startswith('*'):
+                user_agent = '^' + user_agent
+            if not user_agent.endswith('*'):
+                user_agent = user_agent + '$'
+            list_of_commands.append(
+                provision_commands.get('http-user-aget').format(partition='1:1', entry=entry,
+                                                                user_agent=user_agent)
             )
         if app_filter_dict.get(entry).get('protocol'):
             list_of_commands.append(

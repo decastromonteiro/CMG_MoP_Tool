@@ -1,6 +1,5 @@
 import re
 # todo: deal with group-of-ruledefs when rule is dynamic
-from utils.utils import check_spi_rule, check_spi_filter
 from utils.yaml import read_yaml_file, export_yaml
 import ipaddress
 import logging
@@ -622,12 +621,14 @@ def create_filterbase_yaml(parsed_ruledef_yaml):
             l7_uri = uri
             host_name = host
             signature = filters.get(filter_number).get('signature')
+            http_user_agent = filters.get(filter_number).get('http-user-agent')
 
             filters_dict.update({filter_number: {'destination-address': destination_address,
                                                  'destination-port-list': destination_port_list,
                                                  'domain-name': domain_name,
                                                  'protocol-id': protocol_id,
                                                  'host-name': host_name,
+                                                 'http-user-agent': http_user_agent,
                                                  'l7-uri': l7_uri,
                                                  'signature': signature
                                                  }

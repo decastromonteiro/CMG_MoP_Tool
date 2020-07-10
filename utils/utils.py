@@ -38,17 +38,17 @@ def check_spi_rule(filter_base_yaml, policy_rule_yaml, domain_name=False, ip_add
                             filter_dict = filter_base_dict.get(filter_base).get(filter_id)
                             if domain_name and ip_address:
                                 if filter_dict.get('host-name') or filter_dict.get('l7-uri') or filter_dict.get(
-                                        'signature'):
+                                        'signature') or filter_dict.get('http-user-agent'):
                                     spi_check_set.add(False)
                             elif domain_name:
                                 if filter_dict.get('host-name') or filter_dict.get('l7-uri') or filter_dict.get(
                                         'signature') \
-                                        or filter_dict.get('destination-address'):
+                                        or filter_dict.get('destination-address') or filter_dict.get('http-user-agent'):
                                     spi_check_set.add(False)
                             elif ip_address:
                                 if filter_dict.get('host-name') or filter_dict.get('l7-uri') or filter_dict.get(
                                         'signature') \
-                                        or filter_dict.get('domain-name'):
+                                        or filter_dict.get('domain-name') or filter_dict.get('http-user-agent'):
                                     spi_check_set.add(False)
                             else:
                                 spi_check_set.add(False)
