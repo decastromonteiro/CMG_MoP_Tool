@@ -118,10 +118,7 @@ def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
                 rule_unit=policy_rule_dict.get(key).get('policy-rule-unit'),
                 charging_rule_unit=policy_rule_dict.get(key).get('charging-rule-unit'),
                 precedence=policy_rule_dict.get(key).get('precedence'),
-                action_rule_unit='' if policy_rule_dict.get(key).get(
-                    'action-rule-unit') == 'null' else 'action-rule-unit {}'.format(
-                    policy_rule_dict.get(key).get('action-rule-unit')
-                )
+                action_rule_unit='action-rule-unit {}'.format(aru) if aru else ''
             )
         )
         pr_base_commands.append(provision_command_dict.get('commit'))
