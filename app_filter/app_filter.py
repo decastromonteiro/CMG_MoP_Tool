@@ -383,8 +383,8 @@ def create_app_filter_mop(app_filter_yaml, app_filter_commands):
             if not user_agent.endswith('*'):
                 user_agent = user_agent + '$'
             list_of_commands.append(
-                provision_commands.get('http-user-aget').format(partition='1:1', entry=entry,
-                                                                user_agent=user_agent)
+                provision_commands.get('http-user-agent').format(partition='1:1', entry=entry,
+                                                                 user_agent=user_agent)
             )
         if app_filter_dict.get(entry).get('protocol'):
             list_of_commands.append(
