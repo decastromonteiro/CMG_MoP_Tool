@@ -121,9 +121,9 @@ def create_policy_rule_mop(policy_rule_yaml, policy_rule_commands_template):
                 action_rule_unit='action-rule-unit {}'.format(aru) if aru else ''
             )
         )
-        pr_base_commands.append(provision_command_dict.get('commit'))
+    pr_base_commands.append(provision_command_dict.get('commit'))
 
-        return export_mop_file('policy_rule_mop', pr_base_commands)
+    return export_mop_file('policy_rule_mop', pr_base_commands)
 
 
 def create_policy_rule_upf_mop(policy_rule_yaml, policy_rule_commands_template, sru_list_yaml):
@@ -147,9 +147,9 @@ def create_policy_rule_upf_mop(policy_rule_yaml, policy_rule_commands_template, 
             )
         )
 
-        pr_base_commands.append(provision_command_dict.get('commit'))
+    pr_base_commands.append(provision_command_dict.get('commit'))
 
-        return export_mop_file('upf_policy_rule_mop', pr_base_commands)
+    return export_mop_file('upf_policy_rule_mop', pr_base_commands)
 
 
 def create_policy_rule_base_mop(cmg_policy_rule_base_yaml, policy_rule_commands_template):
