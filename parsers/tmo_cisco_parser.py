@@ -516,8 +516,8 @@ def parse_raw_charging_action(raw_charging_action_path):
                     match = re.match(enc_header_enrich_pattern, parameter)
                     parameter_dict['header-enrich'] = {
                         'he-template': match.group(1),
-                        'encryption': match.group(2),
-                        'key': match.group(3)
+                        'encryption': match.group(2) if match.group(2) else None,
+                        'key': match.group(3) if match.group(3) else None
                     }
                 elif parameter.startswith('xheader-insert'):
                     match = re.match(header_enrich_pattern, parameter)
