@@ -17,7 +17,8 @@ def create_dns_yaml(policy_rule_yaml, filter_base_yaml, spid):
 
     for key in filter_base_dict:
         filter_dict = filter_base_dict.get(key)
-        if spid and filter_base_dict.get(key).pop('SPI'):
+        spi = filter_base_dict.get(key).pop('SPI')
+        if spid and spi:
             continue
         for filter_name in filter_dict:
             domain = filter_dict.get(filter_name).get('domain-name')
@@ -32,6 +33,9 @@ def create_dns_yaml(policy_rule_yaml, filter_base_yaml, spid):
                             domain
                         )
     for key in policy_rule_filter_dict:
+        spi = policy_rule_filter_dict.get(key).pop('SPI')
+        if spid and spi:
+            continue
         for filter_name in policy_rule_filter_dict.get(key):
             filter_dict = policy_rule_filter_dict.get(key).get(filter_name)
             domain = filter_dict.get('domain-name')

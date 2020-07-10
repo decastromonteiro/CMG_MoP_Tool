@@ -209,8 +209,10 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
             print(key)
     # app-filter from FILTERS
     for key in policy_rule_filter_dict:
+        policy_rule_filter_dict.get(key).pop('SPI')
         for filter_name in policy_rule_filter_dict.get(key):
             filter_dict = policy_rule_filter_dict.get(key).get(filter_name)
+
             if not (filter_dict.get('destination-address') or filter_dict.get(
                     'ipv6-destination-address') or filter_dict.get('source-address') or
                     filter_dict.get('ipv6-source-address')):
@@ -226,7 +228,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                     ':') else None
                 domain = filter_dict.get('domain-name')
                 application = key
-                user_agent = filter_dict.get(filter_name).get('http-user-agent')
+                user_agent = filter_dict.get('http-user-agent')
                 entry_number, entries_application_dict = calculate_entry_number(
                     rule_precedence_dict=rule_precedence_dict,
                     application=application,

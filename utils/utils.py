@@ -71,6 +71,55 @@ def check_spi_rule(filter_base_yaml, policy_rule_yaml, domain_name=False, ip_add
     return export_yaml(filter_base_dict, 'FilterBase')
 
 
+def check_spi_rule_filters(policy_rule_yaml, domain_name=False, ip_address=False):
+    pr_dict = read_yaml_file(policy_rule_yaml, 'PolicyRule')
+    for pr in pr_dict.keys():
+        pr_parameters = pr_dict.get(pr)
+        he = pr_parameters.get('header-enrichment-type')
+        redirect = pr_parameters.get('redirect-uri')
+        if pr_parameters.get('Filters'):
+            try:
+                if ((he == 'null') or (he == 'cisco: None') or (not he)) and not redirect:
+                    spi_check_set = set()
+                    # Same Filter Base might be used several times, therefore SPI may already be present
+                    # (if its false, it will forever be false)
+                    # (if its true, and it made the #1 criteria, it will continue true)
+                    if isinstance(pr_parameters.get('Filters').get('SPI'), bool):
+                        continue
+                    else:
+                        for filter_id in pr_parameters.get('Filters'):
+                            filter_dict = pr_parameters.get('Filters').get(filter_id)
+                            if domain_name and ip_address:
+                                if filter_dict.get('host-name') or filter_dict.get('l7-uri') or filter_dict.get(
+                                        'signature') or filter_dict.get('http-user-agent'):
+                                    spi_check_set.add(False)
+                            elif domain_name:
+                                if filter_dict.get('host-name') or filter_dict.get('l7-uri') or filter_dict.get(
+                                        'signature') \
+                                        or filter_dict.get('destination-address') or filter_dict.get('http-user-agent'):
+                                    spi_check_set.add(False)
+                            elif ip_address:
+                                if filter_dict.get('host-name') or filter_dict.get('l7-uri') or filter_dict.get(
+                                        'signature') \
+                                        or filter_dict.get('domain-name') or filter_dict.get('http-user-agent'):
+                                    spi_check_set.add(False)
+                            else:
+                                spi_check_set.add(False)
+                        if False not in spi_check_set:
+                            pr_parameters['Filters']['SPI'] = True
+                        else:
+                            pr_parameters['Filters']['SPI'] = False
+
+                else:
+                    pr_parameters['Filters']['SPI'] = False
+
+            except:
+                print(f" Filters referecend by PR {pr} has an issue.")
+                traceback.print_exc()
+
+    return export_yaml(pr_dict, 'PolicyRule')
+
+
 def check_spi_filter(filter_base_yaml, policy_rule_yaml, domain_name=False, ip_address=False):
     filter_base_dict = read_yaml_file(filter_base_yaml, 'FilterBase')
     pr_dict = read_yaml_file(policy_rule_yaml, 'PolicyRule')

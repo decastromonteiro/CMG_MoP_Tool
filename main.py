@@ -11,7 +11,7 @@ from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_
     create_policy_rule_upf_mop
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
-from utils.utils import check_spi_rule, create_unique_pru, check_name_length
+from utils.utils import check_spi_rule, create_unique_pru, check_name_length, check_spi_rule_filters
 from parsers import tmo_cisco_parser as cisco
 from redirect.http_redirect import create_http_redirect_mop, create_redirect_aqp_yaml, create_aqp_http_redirect_mop, \
     create_redirect_yaml, create_rule_redirect_dict
@@ -25,7 +25,7 @@ import argparse
 import os
 
 
-def create_yaml_from_fng(fng_inputs_dir):
+def create_yaml_from_fng(fng_inputs_dir, spid, spip):
     list_of_files = os.listdir(fng_inputs_dir)
     if not list_of_files:
         raise FileNotFoundError('Directory {} is Empty'.format(fng_inputs_dir))
@@ -71,6 +71,12 @@ def create_yaml_from_fng(fng_inputs_dir):
 
     qos = YAML(project_name='QoSProfiles')
     qos_path = qos.write_to_yaml({'QoSProfiles': qos_profiles})
+
+    filter_base_yaml = check_spi_rule(filter_base_yaml=filter_base_path,
+                                      policy_rule_yaml=pr_path,
+                                      domain_name=spid, ip_address=spip)
+
+    policy_rule_yaml = check_spi_rule_filters(policy_rule_yaml=pr_path,domain_name=spid, ip_address=spip)
 
     return {
         'FilterBaseYAML': filter_base_path,
@@ -484,7 +490,8 @@ def main():
     if args.flexiNG:
         print('#### Initializing script... ####\n\n')
         print("Parsing FNG Files and Creating Base YAML files, please wait.\n")
-        path_dict = create_yaml_from_fng(os.path.abspath(args.flexiNG))
+        path_dict = create_yaml_from_fng(os.path.abspath(args.flexiNG), spip=args.spi_address,
+                                         spid=args.spi_domain_name)
         print(
             'BaseYAML Files were created on the following Paths:\n\nFilterBaseYAML:{filter_base_path}\n'
             'PolicyRuleYAML: {pr_path}\nPolicyRuleBaseYAML: {prb_path}'
