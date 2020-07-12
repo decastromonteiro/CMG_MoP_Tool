@@ -1,6 +1,5 @@
 from utils.yaml import read_yaml_file, export_yaml
 from utils.utils import export_mop_file, chuncks, get_filter, get_filter_base
-import os
 
 
 def create_addr_list_yaml(policy_rule_yaml, filter_base_yaml, minimum_ip_qnt=3):

@@ -1,25 +1,10 @@
-from utils.yaml import YAML
+from utils.yaml import read_yaml_file, export_yaml
 from utils.utils import chuncks, get_filter_base, get_filter, export_mop_file
-import os
-import ipaddress
-import re
 
 
-def read_yaml_file(file_input):
-    ry = YAML()
-    d = ry.read_yaml(file_input)
-    return d
-
-
-def export_yaml(lista, project_name='PrefixList'):
-    wy = YAML(project_name=project_name)
-    path = wy.write_to_yaml({'PrefixList': lista})
-    return path
-
-
-def create_prefix_list_yaml(policy_rule_yaml, filter_base_yaml):
-    filters = get_filter(policy_rule_yaml)
-    filter_bases = get_filter_base(filter_base_yaml)
+def create_prefix_list_yaml(policy_rule_yaml, filter_base_yaml, spip):
+    filters = get_filter(policy_rule_yaml, spi_mode=spip)
+    filter_bases = get_filter_base(filter_base_yaml, spi_mode=spip)
     if filters and filter_bases:
         filters.update(filter_bases)
         prefix_dict = filters
@@ -44,8 +29,7 @@ def create_prefix_list_yaml(policy_rule_yaml, filter_base_yaml):
                 _count += 1
             count += 1
 
-    path = export_yaml(arranged_prefix_dict_list, project_name='PrefixList')
-    return path
+    return export_yaml(arranged_prefix_dict_list, project_name='PrefixList')
 
 
 def create_prefix_list_mop(prefix_yaml_input, command_yaml_input):

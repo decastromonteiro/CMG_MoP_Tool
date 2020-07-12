@@ -25,7 +25,7 @@ import argparse
 import os
 
 
-def create_yaml_from_fng(fng_inputs_dir, spid, spip):
+def create_yaml_from_fng(fng_inputs_dir, spid, spip, rule_conersion_dict):
     list_of_files = os.listdir(fng_inputs_dir)
     if not list_of_files:
         raise FileNotFoundError('Directory {} is Empty'.format(fng_inputs_dir))
@@ -49,40 +49,26 @@ def create_yaml_from_fng(fng_inputs_dir, spid, spip):
     pcc_rule_base = os.path.join(fng_inputs_dir, 'fng_policy_rule_base')
     qos_profile = os.path.join(fng_inputs_dir, 'fng_qos')
 
-    filter_base = parse_filter_base(fng_filter_base)
-    filters = parse_pcc_rule_filter(fng_filters)
-    pcc_rules = parse_pcc_rule(pcc_rule, filters)
-    pcc_rule_bases = parse_pcc_rule_base(pcc_rule_base)
-    qos_profiles = parse_qos_profiles(qos_profile)
-
     if not os.path.exists(os.path.join(os.getcwd(), 'BaseYAML')):
         os.makedirs(os.path.join(os.getcwd(), 'BaseYAML'))
 
     os.chdir(os.path.join(os.getcwd(), 'BaseYAML'))
+    filter_base = parse_filter_base(fng_filter_base)
+    pcc_rules = parse_pcc_rule(pcc_rule, fng_filters, rule_conersion_dict)
+    pcc_rule_bases = parse_pcc_rule_base(pcc_rule_base, rule_conersion_dict)
+    qos_profiles = parse_qos_profiles(qos_profile)
 
-    fb = YAML(project_name="FilterBase")
-    filter_base_path = fb.write_to_yaml({'FilterBase': filter_base})
-
-    pr = YAML(project_name="PolicyRule")
-    pr_path = pr.write_to_yaml({'PolicyRule': pcc_rules})
-
-    prb = YAML(project_name='PolicyRuleBase')
-    prb_path = prb.write_to_yaml({'PolicyRuleBase': pcc_rule_bases})
-
-    qos = YAML(project_name='QoSProfiles')
-    qos_path = qos.write_to_yaml({'QoSProfiles': qos_profiles})
-
-    filter_base_yaml = check_spi_rule(filter_base_yaml=filter_base_path,
-                                      policy_rule_yaml=pr_path,
+    filter_base_yaml = check_spi_rule(filter_base_yaml=filter_base,
+                                      policy_rule_yaml=pcc_rules,
                                       domain_name=spid, ip_address=spip)
 
-    policy_rule_yaml = check_spi_rule_filters(policy_rule_yaml=pr_path,domain_name=spid, ip_address=spip)
+    policy_rule_yaml = check_spi_rule_filters(policy_rule_yaml=pcc_rules, domain_name=spid, ip_address=spip)
 
     return {
-        'FilterBaseYAML': filter_base_path,
-        'PolicyRuleYAML': pr_path,
-        'PolicyRuleBaseYAML': prb_path,
-        'QoSYAML': qos_path
+        'FilterBaseYAML': filter_base_yaml,
+        'PolicyRuleYAML': policy_rule_yaml,
+        'PolicyRuleBaseYAML': pcc_rule_bases,
+        'QoSYAML': qos_profiles
     }
 
 
@@ -176,7 +162,8 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
 
     application_yaml = create_application_yaml(policy_rule_yaml=policy_rule_yaml)
     charging_yaml = create_charging_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml, mk_to_ascii=mk_to_ascii)
-    prefix_yaml = create_prefix_list_yaml(policy_rule_yaml=policy_rule_yaml, filter_base_yaml=filter_base_yaml)
+    prefix_yaml = create_prefix_list_yaml(policy_rule_yaml=policy_rule_yaml, filter_base_yaml=filter_base_yaml,
+                                          spip=spip)
     dns_ip_cache_yaml = create_dns_yaml(policy_rule_yaml=policy_rule_yaml,
                                         filter_base_yaml=filter_base_yaml,
                                         spid=spid)
@@ -463,7 +450,7 @@ def main():
                         help="Input cmgYAML Directory PATH")
     parser.add_argument("-t", "--templates", type=str,
                         help="Input Commands Template Directory PATH")
-    parser.add_argument("-rd", "--ruleDictionary", action="store_true",
+    parser.add_argument("-rd", "--ruleDictionary", type=str,
                         help="Provide PATH to Policy-Rule Name conversion if needed.")
     parser.add_argument("-ascii", "--MKascii", action="store_true",
                         help="Choose whether to use ASCII encode in Monitoring Key parameter")
@@ -491,7 +478,7 @@ def main():
         print('#### Initializing script... ####\n\n')
         print("Parsing FNG Files and Creating Base YAML files, please wait.\n")
         path_dict = create_yaml_from_fng(os.path.abspath(args.flexiNG), spip=args.spi_address,
-                                         spid=args.spi_domain_name)
+                                         spid=args.spi_domain_name, rule_conersion_dict=args.ruleDictionary)
         print(
             'BaseYAML Files were created on the following Paths:\n\nFilterBaseYAML:{filter_base_path}\n'
             'PolicyRuleYAML: {pr_path}\nPolicyRuleBaseYAML: {prb_path}'

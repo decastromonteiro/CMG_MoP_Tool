@@ -32,11 +32,15 @@ def create_policy_rule_unit_yaml(policy_rule_yaml, unique_pru_yaml, pdr_yaml):
     for policy_rule in policy_rule_dict.keys():
         filter_base = policy_rule_dict.get(policy_rule).get('pcc-filter-base-name')
         flow_gate_status = policy_rule_dict.get(policy_rule).get('pcc-rule-action')
-        concat = f"{filter_base}{flow_gate_status}"
+        if filter_base:
+            concat = f"{filter_base}{flow_gate_status}"
+        else:
+            concat = f"{policy_rule}{flow_gate_status}"
         if not unique_pru_dict.get(concat).startswith('SPI'):
             pru_name = unique_pru_dict.get(concat)
+            charging_group = filter_base if filter_base else policy_rule
             policy_rule_unit_dict.update(
-                {pru_name: {'aa-charging-group': filter_base,
+                {pru_name: {'aa-charging-group': charging_group,
                             'flow-gate-status': flow_gate_status_dict.get(flow_gate_status,
                                                                           flow_gate_status),
                             }
@@ -57,7 +61,10 @@ def create_policy_rule_yaml(policy_rule_yaml, unique_pru_yaml, mk_to_ascii):
     for policy_rule in policy_rule_dict.keys():
         filter_base = policy_rule_dict.get(policy_rule).get('pcc-filter-base-name')
         flow_gate_status = policy_rule_dict.get(policy_rule).get('pcc-rule-action')
-        concat = f"{filter_base}{flow_gate_status}"
+        if filter_base:
+            concat = f"{filter_base}{flow_gate_status}"
+        else:
+            concat = f"{policy_rule}{flow_gate_status}"
         output_policy_rule_dict.update(
             {
                 policy_rule: {

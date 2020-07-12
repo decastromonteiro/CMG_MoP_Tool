@@ -4,7 +4,6 @@ import os
 import re
 
 
-# todo: use addr list when IP has more than 3 flow-descriptions
 def create_spi_policy_rule_unit_yaml(filter_base_yaml, policy_rule_yaml, unique_pru_yaml, port_list_yaml,
                                      addr_list_yaml, pdr_yaml):
     filter_base_dict = read_yaml_file(filter_base_yaml, 'FilterBase')
@@ -19,26 +18,45 @@ def create_spi_policy_rule_unit_yaml(filter_base_yaml, policy_rule_yaml, unique_
     for policy_rule in policy_rule_dict.keys():
         filter_base = policy_rule_dict.get(policy_rule).get('pcc-filter-base-name')
         flow_gate_status = policy_rule_dict.get(policy_rule).get('pcc-rule-action')
-        concat = f"{filter_base}{flow_gate_status}"
-        if filter_base_dict.get(filter_base):
-            if filter_base not in used_filter_base:
-                used_filter_base.append(filter_base)
-                if filter_base_dict.get(filter_base).pop('SPI'):
-                    flow_description = create_flow_description(filter_base_dict.get(filter_base),
-                                                               application=filter_base,
-                                                               port_list_yaml=port_list_yaml,
-                                                               addr_list_yaml=addr_list_yaml)
-                    pru_name = f"SPI-{unique_pru_dict.get(concat)}"
-                    policy_rule_unit_dict.update(
-                        {pru_name: {
-                            'flow-description': flow_description,
-                            'flow-gate-status': flow_gate_status_dict.get(flow_gate_status, flow_gate_status)
-                        }}
-                    )
-                    if pdr_dict:
-                        pru_previous_name = unique_pru_dict.get(concat)
-                        policy_rule_unit_dict[pru_name]['pdr-id'] = pdr_dict.get(pru_previous_name)
-                    unique_pru_dict[concat] = pru_name
+        if filter_base:
+            concat = f"{filter_base}{flow_gate_status}"
+            if filter_base_dict.get(filter_base):
+                if filter_base not in used_filter_base:
+                    used_filter_base.append(filter_base)
+                    if filter_base_dict.get(filter_base).pop('SPI'):
+                        flow_description = create_flow_description(filter_base_dict.get(filter_base),
+                                                                   application=filter_base,
+                                                                   port_list_yaml=port_list_yaml,
+                                                                   addr_list_yaml=addr_list_yaml)
+                        pru_name = f"SPI-{unique_pru_dict.get(concat)}"
+                        policy_rule_unit_dict.update(
+                            {pru_name: {
+                                'flow-description': flow_description,
+                                'flow-gate-status': flow_gate_status_dict.get(flow_gate_status, flow_gate_status)
+                            }}
+                        )
+                        if pdr_dict:
+                            pru_previous_name = unique_pru_dict.get(concat)
+                            policy_rule_unit_dict[pru_name]['pdr-id'] = pdr_dict.get(pru_previous_name)
+                        unique_pru_dict[concat] = pru_name
+        else:
+            concat = f"{policy_rule}{flow_gate_status}"
+            if policy_rule_dict.get(policy_rule).get('Filters').pop('SPI'):
+                flow_description = create_flow_description(policy_rule_dict.get(policy_rule).get('Filters'),
+                                                           application=policy_rule,
+                                                           port_list_yaml=port_list_yaml,
+                                                           addr_list_yaml=addr_list_yaml)
+                pru_name = f"SPI-{unique_pru_dict.get(concat)}"
+                policy_rule_unit_dict.update(
+                    {pru_name: {
+                        'flow-description': flow_description,
+                        'flow-gate-status': flow_gate_status_dict.get(flow_gate_status, flow_gate_status)
+                    }}
+                )
+                if pdr_dict:
+                    pru_previous_name = unique_pru_dict.get(concat)
+                    policy_rule_unit_dict[pru_name]['pdr-id'] = pdr_dict.get(pru_previous_name)
+                unique_pru_dict[concat] = pru_name
 
     export_yaml(unique_pru_dict, 'UniquePolicyRuleUnit', os.path.dirname(os.path.abspath(unique_pru_yaml)))
     return export_yaml(policy_rule_unit_dict, 'SPIPolicyRuleUnit')
@@ -79,7 +97,6 @@ def create_flow_description(filters_dict, application, port_list_yaml, addr_list
                         'dns-fqdn-list': application}}
                 )
                 flow_description_count += 1
-        # todo: deal with ip addr list
         else:
             if reverse_addr_list_dict.get(application):
                 for addr_list_name in reverse_addr_list_dict.get(application):

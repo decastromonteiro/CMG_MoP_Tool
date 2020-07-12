@@ -24,12 +24,12 @@ def create_rule_precedence_dict(policy_rule_yaml):
     for key in policy_rule_dict:
         rule_precedence_dict.update({key: policy_rule_dict.get(key).get('precedence')})
         try:
-            if policy_rule_dict.get(key).get('pcc-filter-base-name').lower() != 'null':
+            if policy_rule_dict.get(key).get('pcc-filter-base-name'):
                 rule_precedence_dict.update(
                     {policy_rule_dict.get(key).get('pcc-filter-base-name'): policy_rule_dict.get(key).get(
                         'precedence')})
         except:
-            print(key)
+            print(f"{key} create_rule_precedence_dict")
     return rule_precedence_dict
 
 
@@ -169,9 +169,7 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                             port = port_list_dict.get(port, port)
                         host = filter_dict.get(filter_name).get('host-name')
                         uri = filter_dict.get(filter_name).get('l7-uri')
-                        # if not filter_dict.get(filter_name).get('l7-uri','0000').endswith(':') else None
                         protocol = filter_dict.get(filter_name).get('signature')
-                        #    if filter_dict.get(filter_name).get('l7-uri', '0000').endswith(':') else None
                         domain = filter_dict.get(filter_name).get('domain-name')
                         application = key
                         user_agent = filter_dict.get(filter_name).get('http-user-agent')
@@ -222,10 +220,8 @@ def create_app_filter_yaml(prefix_list_yaml, policy_rule_yaml, filter_base_yaml,
                     if ',' in port:
                         port = ','.join(sorted(port.split(',')))
                 host = filter_dict.get('host-name')
-                uri = filter_dict.get('l7-uri') if not filter_dict.get('l7-uri', '0000').endswith(
-                    ':') else None
-                protocol = filter_dict.get('l7-uri') if filter_dict.get('l7-uri', '0000').endswith(
-                    ':') else None
+                uri = filter_dict.get('l7-uri')
+                protocol = filter_dict.get('signature')
                 domain = filter_dict.get('domain-name')
                 application = key
                 user_agent = filter_dict.get('http-user-agent')

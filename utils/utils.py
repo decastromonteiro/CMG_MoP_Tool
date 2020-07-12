@@ -183,14 +183,22 @@ def create_unique_pru(policy_rule_yaml):
     for pr_name in policy_rule_dict.keys():
         filter_base = policy_rule_dict.get(pr_name).get('pcc-filter-base-name')
         flow_gate_status = policy_rule_dict.get(pr_name).get('pcc-rule-action')
-        concat = f"{filter_base}{flow_gate_status}"
+        if filter_base:
+            concat = f"{filter_base}{flow_gate_status}"
+        else:
+            concat = f"{pr_name}{flow_gate_status}"
         if not unique_pru_dict.get(concat):
-            if not used_filterbase_dict.get(filter_base):
-                used_filterbase_dict.update({filter_base: 1})
-            else:
-                used_filterbase_dict[filter_base] += 1
-            unique_pru_dict.update({concat: f"{filter_base}---{used_filterbase_dict[filter_base]}_PRU"})
+            if filter_base:
+                if not used_filterbase_dict.get(filter_base):
+                    used_filterbase_dict.update({filter_base: 1})
+                    unique_pru_dict.update({concat: f"{filter_base}_PRU"})
+                else:
+                    used_filterbase_dict[filter_base] += 1
+                    unique_pru_dict.update({concat: f"{filter_base}---{used_filterbase_dict[filter_base]}_PRU"})
 
+
+            else:
+                unique_pru_dict.update({concat: f"{pr_name}_PRU"})
     return export_yaml(unique_pru_dict, 'UniquePolicyRuleUnit')
 
 
@@ -217,8 +225,7 @@ def chuncks(lista, size):
         yield lista[i:i + size]
 
 
-# todo: may not work for FNG because SPI is not considered for FNG
-def aggregate_address(input_dict, spi_mode=False):
+def aggregate_address(input_dict, spi_mode):
     if input_dict:
         aggregation_list = dict()
         for key in input_dict:
@@ -307,14 +314,14 @@ def aggregate_address(input_dict, spi_mode=False):
         return aggregation_list
 
 
-def get_filter_base(filter_base_yaml, spi_mode=False):
+def get_filter_base(filter_base_yaml, spi_mode):
     filter_base_list = read_yaml_file(filter_base_yaml).get('FilterBase')
     if filter_base_list:
         return aggregate_address(filter_base_list, spi_mode)
     return None
 
 
-def get_filter(policy_rule_yaml, spi_mode=False):
+def get_filter(policy_rule_yaml, spi_mode):
     policy_rule_filters = create_rule_filter_dict(policy_rule_yaml)
     if policy_rule_filters:
         return aggregate_address(policy_rule_filters, spi_mode)
