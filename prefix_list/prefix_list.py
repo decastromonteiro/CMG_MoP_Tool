@@ -54,15 +54,13 @@ def create_prefix_list_mop(prefix_yaml_input, command_yaml_input):
                     command_list.append(provision_command_dict.get('add_prefix').format(
                         partition='1:1',
                         name=list_prefix_name,
-                        ip=item if '/' in item else item + '/32',
-                        prefix_name=''
+                        ip=item if '/' in item else item + '/32'
                     ))
                 else:
                     command_list.append(provision_command_dict.get('add_prefix').format(
                         partition='1:1',
                         name=list_prefix_name,
-                        ip=item if '/' in item else item + '/128',
-                        prefix_name=''
+                        ip=item if '/' in item else item + '/128'
                     ))
 
     return export_mop_file('aa_prefix_ip_list_mop', command_list)
