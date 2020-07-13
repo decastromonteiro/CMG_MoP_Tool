@@ -69,12 +69,12 @@ def create_header_enrichment_yaml(policy_rule_yaml, he_templates_yaml):
                 )
                 entry_number += 10
 
-    return export_yaml(http_enrich_dict, project_name='HeaderEnrichment')
+    return export_yaml(http_enrich_dict, project_name='HTTPEnrich')
 
 
 def create_header_enrichment_mop(he_template, header_enrichment_yaml, commands_template):
     he_template_dicts = read_yaml_file(he_template).get('HETemplates')
-    http_enrich_dict = read_yaml_file(header_enrichment_yaml).get('HeaderEnrichment')
+    http_enrich_dict = read_yaml_file(header_enrichment_yaml).get('HTTPEnrich')
     provision = read_yaml_file(commands_template).get('commands').get('provision')
     list_of_commands = list()
     for he_template in he_template_dicts:
