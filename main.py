@@ -1,5 +1,7 @@
 from app_filter.app_filter import create_app_filter_yaml, create_app_filter_mop
 from application.application import create_application_yaml, create_application_mop
+from bandwidth_policer.bandwidth_policer import create_bandwidth_policer_yaml, create_policer_aqp_yaml, \
+    create_bandwidth_policer_mop, create_bandwidth_policer_aqp_mop
 from charging.charging_rule_unit import create_charging_rule_unit_yaml, create_charging_rule_unit_mop
 from dns_ip_cache.dns_ip_cache import create_dns_yaml, create_dns_mop
 from header_enrichment.header_enrichment import create_he_template_yaml, create_header_enrichment_yaml, \
@@ -160,6 +162,8 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
     policy_rule_base_yaml = os.path.join(base_yaml_dir, 'PolicyRuleBase.yaml')
     qos_profile_yaml = os.path.join(base_yaml_dir, 'QoSProfiles.yaml')
 
+    policers_yaml = create_bandwidth_policer_yaml(qos_profile_yaml)
+
     application_yaml = create_application_yaml(policy_rule_yaml=policy_rule_yaml)
     charging_yaml = create_charging_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml, mk_to_ascii=mk_to_ascii)
     prefix_yaml = create_prefix_list_yaml(policy_rule_yaml=policy_rule_yaml, filter_base_yaml=filter_base_yaml,
@@ -247,6 +251,10 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
     output_dict['HTTP-Redirect'] = http_redirect_yaml
     check_name_length(yaml_input=http_redirect_yaml, object_name='HTTP-Redirect', max_len=32)
     output_dict['AQP-HTTP-Redirect'] = aqp_http_redirect_yaml
+    output_dict['Policers'] = policers_yaml
+
+    aqp_policer_yaml = create_policer_aqp_yaml(policy_rule_yaml=policy_rule_yaml, qos_profile_yaml=qos_profile_yaml)
+    output_dict['AQP-Policers'] = aqp_policer_yaml
 
     return output_dict
 
@@ -347,6 +355,8 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     cmg_policy_rule_base_yaml = os.path.join(cmg_yaml_dir, 'CMGPolicyRuleBase.yaml')
     http_redirect_yaml = os.path.join(cmg_yaml_dir, 'HTTP-Redirect.yaml')
     aqp_redirect_yaml = os.path.join(cmg_yaml_dir, 'AQP-HTTP-Redirect.yaml')
+    policer_yaml = os.path.join(cmg_yaml_dir, 'Policers.yaml')
+    aqp_policer_yaml = os.path.join(cmg_yaml_dir, 'AQP-Policers.yaml')
     # # Base YAML Files
     # policy_rule_base_yaml = os.path.join(base_yaml_dir, 'PolicyRuleBase.yaml')
     # # qos_profile_yaml = os.path.join(base_yaml_dir, 'QoSProfiles.yaml')
@@ -360,6 +370,7 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     port_list_commands = os.path.join(templates_dir, 'port_list_commands.yaml')
     prefix_commands = os.path.join(templates_dir, 'prefix_list_commands.yaml')
     redirect_commands = os.path.join(templates_dir, 'http_redirect.yaml')
+    policer_commands = os.path.join(templates_dir, 'policers.yaml')
     application_mop = create_application_mop(application_yaml_input=application_yaml,
                                              command_yaml_input=application_commands)
     charging_mop = create_charging_rule_unit_mop(yaml_cru=charging_yaml, yaml_template=charging_commands)
@@ -386,6 +397,10 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     redirect_templates_mop = create_http_redirect_mop(http_redirect_yaml, redirect_commands)
     redirect_aqp_mop = create_aqp_http_redirect_mop(aqp_redirect_yaml, redirect_commands)
 
+    policer_mop = create_bandwidth_policer_mop(policers_yaml=policer_yaml, policers_command_yaml=policer_commands)
+    aqp_policer_mop = create_bandwidth_policer_aqp_mop(aqp_policers_yaml=aqp_policer_yaml,
+                                                       policers_command_yaml=policer_commands)
+
     output_dict['Application MoP'] = application_mop
     output_dict['Charging MoP'] = charging_mop
     output_dict['AA PortList MoP'] = port_list_mop
@@ -397,6 +412,8 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     output_dict['Policy Rule Base MoP'] = prb_mop
     output_dict['Redirect Template MoP'] = redirect_templates_mop
     output_dict['AQP Redirect MoP'] = redirect_aqp_mop
+    output_dict['Policers MoP'] = policer_mop
+    output_dict['AQP Policers MoP'] = aqp_policer_mop
 
     if spid or spip:
         addr_list_yaml = os.path.abspath(os.path.join(cmg_yaml_dir, 'AddrList.yaml'))
