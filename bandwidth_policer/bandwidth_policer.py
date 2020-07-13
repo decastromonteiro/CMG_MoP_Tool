@@ -101,7 +101,7 @@ def create_bandwidth_policer_mop(policers_yaml, policers_command_yaml):
             provision_commands.get('config_mbs').format(policer=policer,
                                                         mbs=policers_dict.get(policer).get('mbs'))
         )
-    return export_mop_file('bandwidth_policer', list_of_commands)
+    return export_mop_file('aa_bandwidth_policer', list_of_commands)
 
 
 def create_bandwidth_policer_aqp_mop(aqp_policers_yaml, policers_command_yaml):
@@ -185,4 +185,4 @@ def create_bandwidth_policer_aqp_mop(aqp_policers_yaml, policers_command_yaml):
         provision_commands.get('aa_commit').format(partition="1:1")
     )
 
-    return export_mop_file('aqp_policers', list_of_commands)
+    return export_mop_file('aa_aqp_policers', list_of_commands)
