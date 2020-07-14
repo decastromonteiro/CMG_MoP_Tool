@@ -48,7 +48,7 @@ def create_policer_aqp_yaml(policy_rule_yaml, qos_profile_yaml):
                 {
                     aqp_entry: {'application': application,
                                 'characteristics': {'name': 'QoS', 'value': qos_profile},
-                                'policer': dl_policer_name,
+                                'policer': ul_policer_name,
                                 'traffic-direction': 'subscriber-to-network',
                                 }
                 }
@@ -58,7 +58,7 @@ def create_policer_aqp_yaml(policy_rule_yaml, qos_profile_yaml):
                 {
                     aqp_entry: {'application': application,
                                 'characteristics': {'name': 'QoS', 'value': qos_profile},
-                                'policer': ul_policer_name,
+                                'policer': dl_policer_name,
                                 'traffic-direction': 'network-to-subscriber',
                                 }
                 }
