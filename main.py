@@ -13,6 +13,7 @@ from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_
     create_policy_rule_upf_mop
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
+from tree_parser.treeparser import convert_to_flat
 from utils.utils import check_spi_rule, create_unique_pru, check_name_length, check_spi_rule_filters
 from parsers import tmo_cisco_parser as cisco
 from redirect.http_redirect import create_http_redirect_mop, create_redirect_aqp_yaml, create_aqp_http_redirect_mop, \
@@ -481,6 +482,10 @@ def main():
                         help="Define if Cisco Header Enrichment is used.")
     parser.add_argument("-cy", "--ciscoYAML",
                         help="Define ciscoYAML Directory Path")
+    parser.add_argument("-i", "--identation", action="store_true",
+                        help="Define identation spaces on original config file")
+    parser.add_argument("-f", "--flat",
+                        help="Define original config file path to be converted to flat")
     args = parser.parse_args()
 
     print("Welcome to CMG Application Assurance Tool v1.1\n\n"
@@ -544,6 +549,9 @@ def main():
     elif args.cmgYAML:
         print("When inputting cmgYAML please provide Templates as well.")
         return
+    elif args.flat:
+        identation = args.identation if args.identation else 4
+        convert_to_flat(args.flat, identation)
     else:
         print('If you have doubts on how to use this tool, please run it with --help command.')
         input()
