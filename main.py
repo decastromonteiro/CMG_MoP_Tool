@@ -551,7 +551,8 @@ def main():
         return
     elif args.flat:
         identation = args.identation if args.identation else 4
-        convert_to_flat(args.flat, identation)
+        flat_config = convert_to_flat(args.flat, identation)
+        print(f"Converted config file to flat and exported it to {flat_config}")
     else:
         print('If you have doubts on how to use this tool, please run it with --help command.')
         input()

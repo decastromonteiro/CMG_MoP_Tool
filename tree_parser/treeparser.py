@@ -38,4 +38,4 @@ def convert_to_flat(file_input, indentation=4):
         with open(file_output, 'w') as fout:
             for stack in parse_tree(fin, indentation):
                 fout.write(('/{}{}'.format(" ".join(stack), '\n')))
-    print('Done!')
+    return os.path.abspath(file_output)
