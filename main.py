@@ -168,7 +168,7 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
     application_yaml = create_application_yaml(policy_rule_yaml=policy_rule_yaml)
     charging_yaml = create_charging_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml, mk_to_ascii=mk_to_ascii)
     prefix_yaml = create_prefix_list_yaml(policy_rule_yaml=policy_rule_yaml, filter_base_yaml=filter_base_yaml,
-                                          spip=spip)
+                                          spip=False)
     dns_ip_cache_yaml = create_dns_yaml(policy_rule_yaml=policy_rule_yaml,
                                         filter_base_yaml=filter_base_yaml,
                                         spid=spid)
