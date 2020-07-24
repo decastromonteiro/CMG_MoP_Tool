@@ -32,15 +32,15 @@ def create_yaml_from_fng(fng_inputs_dir, spid, spip, rule_conersion_dict):
     list_of_files = os.listdir(fng_inputs_dir)
     if not list_of_files:
         raise FileNotFoundError('Directory {} is Empty'.format(fng_inputs_dir))
-    if not 'fng_filters' in list_of_files:
+    if 'fng_filters' not in list_of_files:
         raise FileNotFoundError("Couldn't find fng_filters file in {} directory".format(fng_inputs_dir))
-    if not 'fng_filter_base' in list_of_files:
+    if 'fng_filter_base' not in list_of_files:
         raise FileNotFoundError("Couldn't find fng_filter_base file in {} directory".format(fng_inputs_dir))
-    if not 'fng_policy_rule' in list_of_files:
+    if 'fng_policy_rule' not in list_of_files:
         raise FileNotFoundError("Couldn't find fng_policy_rule file in {} directory".format(fng_inputs_dir))
-    if not 'fng_policy_rule_base' in list_of_files:
+    if 'fng_policy_rule_base' not in list_of_files:
         raise FileNotFoundError("Couldn't find fng_policy_rule_base file in {} directory".format(fng_inputs_dir))
-    if not 'fng_qos' in list_of_files:
+    if 'fng_qos' not in list_of_files:
         raise FileNotFoundError("Couldn't find fng_qos file in {} directory".format(fng_inputs_dir))
     if len(list_of_files) != len(set(list_of_files)):
         raise FileExistsError(
@@ -112,22 +112,22 @@ def create_yaml_from_cisco(cisco_input_dir, spid, spip):
     ruledef_path = cisco.parse_raw_ruledef(raw_ruledef_path, host_pool_path)
     group_of_ruledef_path = cisco.parse_raw_group_of_ruledef(raw_group_of_ruledef_path)
     parsed_rulebase_path = cisco.parse_raw_rulebase(raw_rulebase_path, group_of_ruledef_path)
-    he_template_path = cisco.parse_raw_he_template(raw_he_template_path)
+    cisco.parse_raw_he_template(raw_he_template_path)
     charging_action_path = cisco.parse_raw_charging_action(raw_charging_action_path)
     unique_template = cisco.make_unique_template(charging_action_path)
     unique_policy_rule_path = cisco.create_unique_policy_rules(parsed_rulebase_path)
 
     os.chdir("..")
     os.chdir(os.path.join(os.getcwd(), 'BaseYAML'))
-    policy_rule_base_path = cisco.create_policy_rule_base_yaml(parsed_rulebase_path, unique_policy_rule_path)
+    cisco.create_policy_rule_base_yaml(parsed_rulebase_path, unique_policy_rule_path)
     qos_yaml = cisco.create_qos_yaml(charging_action_path)
     policy_rule_yaml = cisco.create_policy_rule_yaml(parsed_rulebase_path, charging_action_path,
                                                      unique_policy_rule_path,
                                                      unique_template)
     filter_base_yaml = cisco.create_filterbase_yaml(ruledef_path)
-    filter_base_yaml = check_spi_rule(filter_base_yaml=filter_base_yaml,
-                                      policy_rule_yaml=policy_rule_yaml,
-                                      domain_name=spid, ip_address=spip)
+    check_spi_rule(filter_base_yaml=filter_base_yaml,
+                   policy_rule_yaml=policy_rule_yaml,
+                   domain_name=spid, ip_address=spip)
 
     return {"RawCiscoYAML": os.path.abspath(os.path.dirname(raw_charging_action_path)),
             "CiscoYAML": os.path.abspath(os.path.dirname(host_pool_path)),
@@ -209,8 +209,6 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
         check_name_length(yaml_input=spi_pru_yaml, object_name='SPIPolicyRuleUnit', max_len=32)
         output_dict['AddrList'] = addr_list_yaml
         check_name_length(yaml_input=addr_list_yaml, object_name='AddrList', max_len=32)
-    else:
-        spi_pru_yaml = None
 
     policy_rule_unit_yaml = create_policy_rule_unit_yaml(policy_rule_yaml=policy_rule_yaml,
                                                          unique_pru_yaml=unique_pru_yaml,
