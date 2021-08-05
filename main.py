@@ -1,7 +1,7 @@
 from app_filter.app_filter import create_app_filter_yaml, create_app_filter_mop
 from application.application import create_application_yaml, create_application_mop
 from bandwidth_policer.bandwidth_policer import create_bandwidth_policer_yaml, create_policer_aqp_yaml, \
-    create_bandwidth_policer_mop, create_bandwidth_policer_aqp_mop
+    create_bandwidth_policer_mop, create_bandwidth_policer_aqp_mop, create_policer_aqp_for_clones
 from charging.charging_rule_unit import create_charging_rule_unit_yaml, create_charging_rule_unit_mop
 from dns_ip_cache.dns_ip_cache import create_dns_yaml, create_dns_mop
 from header_enrichment.header_enrichment import create_he_template_yaml, create_header_enrichment_yaml, \
@@ -10,7 +10,7 @@ from header_enrichment.header_enrichment import create_he_template_yaml, create_
 from parsers.fng_parser import *
 from policy_rule.policy_rule import create_policy_rule_unit_yaml, create_policy_rule_yaml, \
     create_policy_rule_unit_mop, create_policy_rule_mop, create_policy_rule_base_mop, create_policy_rule_base_yaml, \
-    create_policy_rule_upf_mop
+    create_policy_rule_upf_mop, create_policy_rule_base_with_clones_yaml
 from prefix_list.prefix_list import create_prefix_list_yaml, create_prefix_list_mop
 from server_port.server_port import create_port_list_yaml, create_port_list_mop
 from tree_parser.treeparser import convert_to_flat
@@ -24,6 +24,7 @@ from spi.dns import create_dns_snoop_yaml, create_dns_snoop_mop
 from spi.port import create_spi_port_list_yaml, create_spi_port_list_mop
 from spi.policy_rule import create_spi_policy_rule_unit_yaml, create_spi_pru_mop
 from spi.ip_address_list import create_addr_list_yaml, create_addr_list_mop
+from action_rule_unit.action_rule_unit import create_action_rule_yaml, create_action_rule_unit_mop
 import argparse
 import os
 
@@ -218,6 +219,8 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
     cmg_policy_rule_base_yaml = create_policy_rule_base_yaml(policy_rule_base_yaml=policy_rule_base_yaml)
     http_redirect_yaml = create_redirect_yaml(create_rule_redirect_dict(policy_rule_yaml=policy_rule_yaml))
     aqp_http_redirect_yaml = create_redirect_aqp_yaml(http_redirect_yaml=http_redirect_yaml)
+
+
     if cisco_he:
         he_template_cisco = os.path.join(cisco_yaml_dir, 'CiscoHETemplate.yaml')
         charging_action_yaml = os.path.join(cisco_yaml_dir, 'ChargingActionCisco.yaml')
@@ -254,6 +257,9 @@ def create_yaml_for_cmg(base_yaml_dir, mk_to_ascii, cups, spid, spip, cisco_he, 
 
     aqp_policer_yaml = create_policer_aqp_yaml(policy_rule_yaml=policy_rule_yaml, qos_profile_yaml=qos_profile_yaml)
     output_dict['AQP-Policers'] = aqp_policer_yaml
+
+    action_rule_unit_yaml = create_action_rule_yaml(policy_rule_yaml=policy_rule_yaml, policer_aqp_yaml=aqp_policer_yaml)
+    output_dict['Action-Rule-Unit'] = action_rule_unit_yaml
 
     return output_dict
 
@@ -356,6 +362,7 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     aqp_redirect_yaml = os.path.join(cmg_yaml_dir, 'AQP-HTTP-Redirect.yaml')
     policer_yaml = os.path.join(cmg_yaml_dir, 'Policers.yaml')
     aqp_policer_yaml = os.path.join(cmg_yaml_dir, 'AQP-Policers.yaml')
+    aru_yaml = os.path.join(cmg_yaml_dir, "ActionRuleUnit.yaml")
     # # Base YAML Files
     # policy_rule_base_yaml = os.path.join(base_yaml_dir, 'PolicyRuleBase.yaml')
     # # qos_profile_yaml = os.path.join(base_yaml_dir, 'QoSProfiles.yaml')
@@ -370,6 +377,8 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     prefix_commands = os.path.join(templates_dir, 'prefix_list_commands.yaml')
     redirect_commands = os.path.join(templates_dir, 'http_redirect.yaml')
     policer_commands = os.path.join(templates_dir, 'policers.yaml')
+
+
     application_mop = create_application_mop(application_yaml_input=application_yaml,
                                              command_yaml_input=application_commands)
     charging_mop = create_charging_rule_unit_mop(yaml_cru=charging_yaml, yaml_template=charging_commands)
@@ -400,6 +409,8 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     aqp_policer_mop = create_bandwidth_policer_aqp_mop(aqp_policers_yaml=aqp_policer_yaml,
                                                        policers_command_yaml=policer_commands)
 
+    aru_mop = create_action_rule_unit_mop(action_rule_unit_yaml=aru_yaml, policy_rule_commands_template=pr_commands)                                                       
+
     output_dict['Application MoP'] = application_mop
     output_dict['Charging MoP'] = charging_mop
     output_dict['AA PortList MoP'] = port_list_mop
@@ -413,6 +424,7 @@ def create_mop_from_cmg_yaml(cmg_yaml_dir, templates_dir, cups, spip, spid, cisc
     output_dict['AQP Redirect MoP'] = redirect_aqp_mop
     output_dict['Policers MoP'] = policer_mop
     output_dict['AQP Policers MoP'] = aqp_policer_mop
+    output_dict['Action Rule Unit MoP'] = aru_mop
 
     if spid or spip:
         addr_list_yaml = os.path.abspath(os.path.join(cmg_yaml_dir, 'AddrList.yaml'))
@@ -484,6 +496,8 @@ def main():
                         help="Define identation spaces on original config file")
     parser.add_argument("-f", "--flat",
                         help="Define original config file path to be converted to flat")
+    parser.add_argument("-cl", "--clone_prs", action="store_true",
+                        help="Generate Clone Policy Rules required for CMG version 10." )
     args = parser.parse_args()
 
     print("Welcome to CMG Application Assurance Tool v1.1\n\n"
@@ -533,6 +547,30 @@ def main():
             print(f"{key}: {path_dict.get(key)}")
         return
 
+    elif args.flat:
+        identation = args.identation if args.identation else 4
+        flat_config = convert_to_flat(args.flat, identation)
+        print(f"Converted config file to flat and exported it to {flat_config}")
+
+    elif args.clone_prs and args.cmgYAML and args.baseYAML:
+        policy_rule_base_yaml = os.path.join(os.path.abspath(args.cmgYAML), 'CMGPolicyRuleBase.yaml')
+        policy_rule_yaml = os.path.join(os.path.abspath(args.cmgYAML), 'CMGPolicyRule.yaml')
+        application_yaml = os.path.join(os.path.abspath(args.cmgYAML), 'Application.yaml')
+        policy_rule_unit_yaml = os.path.join(os.path.abspath(args.cmgYAML), 'PolicyRuleUnit.yaml')
+        create_policy_rule_base_with_clones_yaml(
+            policy_rule_base_yaml=policy_rule_base_yaml,
+            application_yaml=application_yaml,
+            policy_rule_yaml=policy_rule_yaml,
+            policy_rule_unit_yaml=policy_rule_unit_yaml
+        )
+
+        qos_profile_yaml = os.path.join(os.path.abspath(args.baseYAML), 'QoSProfiles.yaml')
+        aqp_policer_yaml = os.path.join(os.path.abspath(args.cmgYAML), 'AQP-Policers.yaml')
+
+        create_policer_aqp_for_clones(policy_rule_yaml, policy_rule_base_yaml, aqp_policer_yaml, qos_profile_yaml, policy_rule_unit_yaml)
+
+        print("Done Creating Clone Policy Rules")
+
     elif args.baseYAML:
         print('#### Initializing script... ####\n\n')
         print("Creating all CMG YAML files, please wait.\n")
@@ -544,13 +582,10 @@ def main():
         for key in path_dict:
             print(f"{key}: {path_dict.get(key)}")
         return
+
     elif args.cmgYAML:
         print("When inputting cmgYAML please provide Templates as well.")
         return
-    elif args.flat:
-        identation = args.identation if args.identation else 4
-        flat_config = convert_to_flat(args.flat, identation)
-        print(f"Converted config file to flat and exported it to {flat_config}")
     else:
         print('If you have doubts on how to use this tool, please run it with --help command.')
         input()

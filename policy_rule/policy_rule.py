@@ -2,6 +2,7 @@ from charging.charging_rule_unit import create_cru_string
 from utils.yaml import read_yaml_file, export_yaml
 from utils.utils import export_mop_file
 import re
+import os
 
 
 def create_pr_to_charging_rule(policy_rule_yaml, mk_to_ascii):
@@ -83,10 +84,20 @@ def create_policy_rule_yaml(policy_rule_yaml, unique_pru_yaml, mk_to_ascii):
         flow_gate_status = policy_rule_dict.get(policy_rule).get(
             "pcc-rule-action"
         )
+
         if filter_base:
             concat = f"{filter_base}{flow_gate_status}"
+            application = filter_base
         else:
             concat = f"{policy_rule}{flow_gate_status}"
+            application = policy_rule
+
+        if policy_rule_dict.get(policy_rule).get("pcc-rule-action") == "redirect":
+            aru = "redirect"
+        else:
+            aru = policy_rule_dict.get(policy_rule).get("qos-profile-name")
+            if aru:
+                aru = f"{application}-{aru}"
         output_policy_rule_dict.update(
             {
                 policy_rule: {
@@ -95,9 +106,7 @@ def create_policy_rule_yaml(policy_rule_yaml, unique_pru_yaml, mk_to_ascii):
                     "precedence": policy_rule_dict.get(policy_rule).get(
                         "precedence"
                     ),
-                    "action-rule-unit": policy_rule_dict.get(policy_rule).get(
-                        "qos-profile-name"
-                    ),
+                    "action-rule-unit": aru
                 }
             }
         )
@@ -110,10 +119,95 @@ def create_policy_rule_base_yaml(policy_rule_base_yaml):
     prb_output_dict = dict()
     for key in prb_dict:
         prb_output_dict.update(
-            {key: {"policy-rules": prb_dict.get(key), "characteristics": None}}
+            {key: {"policy-rules": prb_dict.get(key), "characteristics": None,
+            "defaultPR": prb_dict.get(key)[-1]}}
         )
 
     return export_yaml(prb_output_dict, project_name="CMGPolicyRuleBase")
+
+
+def create_policy_rule_base_with_clones_yaml(policy_rule_base_yaml, application_yaml, policy_rule_yaml, policy_rule_unit_yaml):
+    prb_dict = read_yaml_file(policy_rule_base_yaml).get("CMGPolicyRuleBase")
+    application_list = read_yaml_file(application_yaml).get("Application")
+    policy_rule_dict = read_yaml_file(policy_rule_yaml).get("CMGPolicyRule")
+    policy_rule_unit_dict = read_yaml_file(policy_rule_unit_yaml).get("PolicyRuleUnit")
+    precedence_start = 61000
+
+    prb_application_dict = dict()
+    # Get Applications per PRB
+    for prb in prb_dict:
+        if not prb_dict[prb].get("SPI"):
+            pr_list = prb_dict[prb].get("policy-rules")
+            app_list = list()
+            for pr in pr_list:
+                pru = policy_rule_dict.get(pr).get("policy-rule-unit")
+                application = policy_rule_unit_dict.get(pru).get("aa-charging-group")
+                app_list.append(application)
+            prb_application_dict.update({prb: app_list})
+            
+
+    # Get Missing Applications in each PRB
+    missing_app_per_prb = dict()
+    for prb in prb_application_dict:
+        prb_app_list = prb_application_dict[prb]
+        missing_application_list = [app for app in application_list if app not in prb_app_list]
+        missing_app_per_prb.update({prb: missing_application_list})
+    
+
+
+    # Increment Clone PRs to PRB YAML and PR Yaml
+    for prb in prb_dict:
+        clone_prs = list()
+        if not prb_dict[prb].get("SPI"): 
+            for pr in prb_dict[prb].get("policy-rules"):
+                default_pr = prb_dict[prb]["defaultPR"]
+                default_cru = policy_rule_dict.get(default_pr).get("charging-rule-unit")[:-3]
+                default_pru = policy_rule_dict.get(default_pr).get("policy-rule-unit")
+                default_flow_gate_status = policy_rule_unit_dict.get(default_pru).get("flow-gate-status")
+                missing_apps = missing_app_per_prb[prb]
+
+                # Check if new PRU is necessary
+                for app in missing_apps:
+                    if policy_rule_unit_dict.get(f"{app}_PRU").get("flow-gate-status") != default_flow_gate_status:
+                        policy_rule_unit_dict.update(
+                            {
+                                f"{app}_{default_flow_gate_status}_PRU": {
+                                    "aa-charging-group": app,
+                                    "flow-gate-status": default_flow_gate_status
+                                }
+                            }
+                        )
+                        app_pru = f"{app}_{default_flow_gate_status}_PRU"
+                    else:
+                        app_pru = f"{app}_PRU"
+                    
+                    pr_name = f"CL_{app}_{default_cru}" if default_flow_gate_status == "allow" else f"CL_{app}_{default_cru}_drop"
+                    if pr_name not in policy_rule_dict:
+                        policy_rule_dict.update(
+                            {
+                                pr_name: {
+                                    "action-rule-unit": None,
+                                    "charging-rule-unit": default_cru,
+                                    "policy-rule-unit": app_pru,
+                                    "precedence": precedence_start
+                                }
+                            }
+                        )
+
+                        precedence_start += 10
+                    clone_prs.append(pr_name)
+            
+            prb_dict[prb].get("policy-rules").extend(list(set(clone_prs)))
+
+
+    # Export all Modified Files
+
+    export_yaml(policy_rule_dict, project_name="CMGPolicyRule", path=os.path.dirname(policy_rule_yaml))
+    export_yaml(policy_rule_unit_dict, project_name="PolicyRuleUnit", path=os.path.dirname(policy_rule_unit_yaml))
+    export_yaml(prb_dict, project_name="CMGPolicyRuleBase", path=os.path.dirname(policy_rule_base_yaml))
+
+    return
+
 
 
 def create_policy_rule_unit_mop(

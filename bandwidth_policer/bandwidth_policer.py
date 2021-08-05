@@ -1,6 +1,6 @@
 from utils.utils import export_mop_file
 from utils.yaml import export_yaml, read_yaml_file
-
+import os
 
 def create_bandwidth_policer_yaml(qos_profile_yaml):
     qos_dict = read_yaml_file(qos_profile_yaml, "QoSProfiles")
@@ -96,6 +96,75 @@ def create_policer_aqp_yaml(policy_rule_yaml, qos_profile_yaml):
 
     return export_yaml(aqp_policer_dict, "AQP-Policers")
 
+
+def create_policer_aqp_for_clones(policy_rule_yaml, policy_rule_base_yaml, aqp_policer_yaml, qos_profile_yaml, policy_rule_unit_yaml):
+    policy_rule_dict = read_yaml_file(policy_rule_yaml, "CMGPolicyRule")
+    prb_dict = read_yaml_file(policy_rule_base_yaml, "CMGPolicyRuleBase")
+    aqp_policer_dict = read_yaml_file(aqp_policer_yaml, "AQP-Policers")
+    qos_dict = read_yaml_file(qos_profile_yaml, "QoSProfiles")
+    pru_dict = read_yaml_file(policy_rule_unit_yaml, "PolicyRuleUnit")
+    aqp_entry = max(aqp_policer_dict.keys()) + 10
+
+    for prb in prb_dict:
+        if not prb_dict[prb].get("SPI"):
+            clone_prs = [pr for pr in prb_dict[prb]["policy-rules"] if pr.startswith("CL_")]
+            pru = policy_rule_dict.get(prb_dict[prb]["defaultPR"]).get("policy-rule-unit")
+            application = pru_dict.get(pru).get("aa-charging-group")
+            aru = policy_rule_dict.get(prb_dict[prb]["defaultPR"]).get("action-rule-unit")
+            if aru:
+                qos_profile = aru.replace(f"{application}-", "")
+            else:
+                qos_profile = None
+            used_application_policer = set()
+            for policy_rule in clone_prs:
+                pru = policy_rule_dict.get(policy_rule).get("policy-rule-unit")
+                application = pru_dict.get(pru).get("aa-charging-group")
+                if qos_profile:
+                    qos_parameters = qos_dict.get(qos_profile)
+                    dl_bs = qos_parameters.get("downlink").get("peak-burst-size")
+                    dl_dr = qos_parameters.get("downlink").get("peak-data-rate")
+                    ul_bs = qos_parameters.get("uplink").get("peak-burst-size")
+                    ul_dr = qos_parameters.get("uplink").get("peak-data-rate")
+                    dl_policer_name = f"DL-BS{dl_bs}k-DR{dl_dr}k"
+                    ul_policer_name = f"UL-BS{ul_bs}k-DR{ul_dr}k"
+                    prb_group = prb_dict[prb]["characteristics"]["value"]
+                    ul_string = f"{application}{qos_profile}{ul_policer_name}{prb_group}"
+                    dl_string = f"{application}{qos_profile}{dl_policer_name}{prb_group}"
+                    if ul_string not in used_application_policer:
+                        used_application_policer.add(ul_string)
+                        aqp_policer_dict.update(
+                            {
+                                aqp_entry: {
+                                    "application": application,
+                                    "characteristics": {
+                                        "name": "PRBGroup",
+                                        "value": prb_group,
+                                    },
+                                    "policer": ul_policer_name,
+                                    "traffic-direction": "subscriber-to-network",
+                                }
+                            }
+                        )
+                        aqp_entry += 10
+                    if dl_string not in used_application_policer:
+                        used_application_policer.add(dl_string)
+                        aqp_policer_dict.update(
+                            {
+                                aqp_entry: {
+                                    "application": application,
+                                    "characteristics": {
+                                        "name": "PRBGroup",
+                                        "value": prb_group,
+                                    },
+                                    "policer": dl_policer_name,
+                                    "traffic-direction": "network-to-subscriber",
+                                }
+                            }
+                        )
+                        aqp_entry += 10
+
+    return export_yaml(aqp_policer_dict, "AQP-Policers", path=os.path.dirname(aqp_policer_yaml))
+    
 
 def create_bandwidth_policer_mop(policers_yaml, policers_command_yaml):
     policers_dict = read_yaml_file(policers_yaml, "Policers")
