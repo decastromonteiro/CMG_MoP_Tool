@@ -170,19 +170,23 @@ def create_policy_rule_base_with_clones_yaml(policy_rule_base_yaml, application_
                 # Check if new PRU is necessary
                 for app in missing_apps:
                     if policy_rule_unit_dict.get(f"{app}_PRU").get("flow-gate-status") != default_flow_gate_status:
+                        if default_flow_gate_status.startswith("http-redirect"):
+                            fgs_name = "red"
+                        else:
+                            fgs_name = default_flow_gate_status
                         policy_rule_unit_dict.update(
                             {
-                                f"{app}_{default_flow_gate_status}_PRU": {
+                                f"{app}_{fgs_name}_PRU": {
                                     "aa-charging-group": app,
                                     "flow-gate-status": default_flow_gate_status
                                 }
                             }
                         )
-                        app_pru = f"{app}_{default_flow_gate_status}_PRU"
+                        app_pru = f"{app}_{fgs_name}_PRU"
                     else:
                         app_pru = f"{app}_PRU"
                     
-                    pr_name = f"CL_{app}_{cru_short_name}" if default_flow_gate_status == "allow" else f"CL_{app}_{cru_short_name}_drop"
+                    pr_name = f"CL_{app}_{cru_short_name}" if default_flow_gate_status == "allow" else f"CL_{app}_{cru_short_name}_{fgs_name}"
                     if pr_name not in policy_rule_dict:
                         policy_rule_dict.update(
                             {
