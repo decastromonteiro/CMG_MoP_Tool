@@ -40,7 +40,7 @@ def create_policer_aqp_yaml(policy_rule_yaml, qos_profile_yaml):
     policy_rule_dict = read_yaml_file(policy_rule_yaml, "PolicyRule")
     qos_dict = read_yaml_file(qos_profile_yaml, "QoSProfiles")
     aqp_policer_dict = dict()
-    aqp_entry = 30000
+    aqp_entry = 30010
     used_application_policer = set()
     for policy_rule in policy_rule_dict.keys():
         filter_base_name = policy_rule_dict.get(policy_rule).get(
@@ -67,10 +67,10 @@ def create_policer_aqp_yaml(policy_rule_yaml, qos_profile_yaml):
                     {
                         aqp_entry: {
                             "application": application,
-                            "characteristics": {
+                            "characteristics": [{
                                 "name": f"{application}-QoS",
                                 "value": qos_profile,
-                            },
+                            }],
                             "policer": ul_policer_name,
                             "traffic-direction": "subscriber-to-network",
                         }
@@ -83,10 +83,10 @@ def create_policer_aqp_yaml(policy_rule_yaml, qos_profile_yaml):
                     {
                         aqp_entry: {
                             "application": application,
-                            "characteristics": {
+                            "characteristics": [{
                                 "name": f"{application}-QoS",
                                 "value": qos_profile,
-                            },
+                            }],
                             "policer": dl_policer_name,
                             "traffic-direction": "network-to-subscriber",
                         }
@@ -109,17 +109,17 @@ def create_policer_aqp_for_clones(policy_rule_yaml, policy_rule_base_yaml, aqp_p
         if not prb_dict[prb].get("SPI"):
             clone_prs = [pr for pr in prb_dict[prb]["policy-rules"] if pr.startswith("CL_")]
             pru = policy_rule_dict.get(prb_dict[prb]["defaultPR"]).get("policy-rule-unit")
-            application = pru_dict.get(pru).get("aa-charging-group")
+            default_application = pru_dict.get(pru).get("aa-charging-group")
             aru = policy_rule_dict.get(prb_dict[prb]["defaultPR"]).get("action-rule-unit")
             if aru:
-                qos_profile = aru.replace(f"{application}-", "")
+                qos_profile = aru.replace(f"{default_application}-", "")
             else:
                 qos_profile = None
             used_application_policer = set()
             for policy_rule in clone_prs:
                 pru = policy_rule_dict.get(policy_rule).get("policy-rule-unit")
                 application = pru_dict.get(pru).get("aa-charging-group")
-                if qos_profile:
+                if qos_profile and qos_profile != "redirect":
                     qos_parameters = qos_dict.get(qos_profile)
                     dl_bs = qos_parameters.get("downlink").get("peak-burst-size")
                     dl_dr = qos_parameters.get("downlink").get("peak-data-rate")
@@ -136,10 +136,14 @@ def create_policer_aqp_for_clones(policy_rule_yaml, policy_rule_base_yaml, aqp_p
                             {
                                 aqp_entry: {
                                     "application": application,
-                                    "characteristics": {
+                                    "characteristics": [{
                                         "name": "PRBGroup",
                                         "value": prb_group,
                                     },
+                                    {
+                                        "name": f"{default_application}-QoS",
+                                        "value": qos_profile
+                                    }],
                                     "policer": ul_policer_name,
                                     "traffic-direction": "subscriber-to-network",
                                 }
@@ -152,10 +156,14 @@ def create_policer_aqp_for_clones(policy_rule_yaml, policy_rule_base_yaml, aqp_p
                             {
                                 aqp_entry: {
                                     "application": application,
-                                    "characteristics": {
+                                    "characteristics": [{
                                         "name": "PRBGroup",
                                         "value": prb_group,
                                     },
+                                    {
+                                        "name": f"{default_application}-QoS",
+                                        "value": qos_profile
+                                    }],
                                     "policer": dl_policer_name,
                                     "traffic-direction": "network-to-subscriber",
                                 }
@@ -215,43 +223,34 @@ def create_bandwidth_policer_aqp_mop(aqp_policers_yaml, policers_command_yaml):
         provision_commands.get("aa_begin").format(partition="1:1")
     )
     for aqp_entry in aqp_policer_dict.keys():
-        list_of_commands.append(
-            provision_commands.get("create_aso").format(
-                partition="1:1",
-                characteristic=aqp_policer_dict.get(aqp_entry)
-                .get("characteristics")
-                .get("name"),
+        for aso in aqp_policer_dict.get(aqp_entry).get("characteristics"):
+            list_of_commands.append(
+                provision_commands.get("create_aso").format(
+                    partition="1:1",
+                    characteristic=aso.get("name"),
+                )
             )
-        )
-        list_of_commands.append(
-            provision_commands.get("aso_value").format(
-                partition="1:1",
-                characteristic=aqp_policer_dict.get(aqp_entry)
-                .get("characteristics")
-                .get("name"),
-                aso_value=aqp_policer_dict.get(aqp_entry)
-                .get("characteristics")
-                .get("value"),
+            list_of_commands.append(
+                provision_commands.get("aso_value").format(
+                    partition="1:1",
+                    characteristic=aso.get("name"),
+                    aso_value=aso.get("value"),
+                )
             )
-        )
-        list_of_commands.append(
-            provision_commands.get("aso_value").format(
-                partition="1:1",
-                characteristic=aqp_policer_dict.get(aqp_entry)
-                .get("characteristics")
-                .get("name"),
-                aso_value="off",
+            list_of_commands.append(
+                provision_commands.get("aso_value").format(
+                    partition="1:1",
+                    characteristic=aso.get("name"),
+                    aso_value="off",
+                )
             )
-        )
-        list_of_commands.append(
-            provision_commands.get("aso_default_value").format(
-                partition="1:1",
-                characteristic=aqp_policer_dict.get(aqp_entry)
-                .get("characteristics")
-                .get("name"),
-                aso_value="off",
+            list_of_commands.append(
+                provision_commands.get("aso_default_value").format(
+                    partition="1:1",
+                    characteristic=aso.get("name"),
+                    aso_value="off",
+                )
             )
-        )
         list_of_commands.append(
             provision_commands.get("create_aqp_entry").format(
                 partition="1:1", entry=aqp_entry
@@ -264,18 +263,15 @@ def create_bandwidth_policer_aqp_mop(aqp_policers_yaml, policers_command_yaml):
                 application=aqp_policer_dict.get(aqp_entry).get("application"),
             )
         )
-        list_of_commands.append(
-            provision_commands.get("match_aqp_aso").format(
-                partition="1:1",
-                entry=aqp_entry,
-                aso=aqp_policer_dict.get(aqp_entry)
-                .get("characteristics")
-                .get("name"),
-                aso_value=aqp_policer_dict.get(aqp_entry)
-                .get("characteristics")
-                .get("value"),
+        for aso in aqp_policer_dict.get(aqp_entry).get("characteristics"):
+            list_of_commands.append(
+                provision_commands.get("match_aqp_aso").format(
+                    partition="1:1",
+                    entry=aqp_entry,
+                    aso=aso.get("name"),
+                    aso_value=aso.get("value"),
+                )
             )
-        )
 
         list_of_commands.append(
             provision_commands.get("match_traffic_direction").format(

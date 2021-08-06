@@ -161,7 +161,8 @@ def create_policy_rule_base_with_clones_yaml(policy_rule_base_yaml, application_
         if not prb_dict[prb].get("SPI"): 
             for pr in prb_dict[prb].get("policy-rules"):
                 default_pr = prb_dict[prb]["defaultPR"]
-                default_cru = policy_rule_dict.get(default_pr).get("charging-rule-unit")[:-3]
+                default_cru = policy_rule_dict.get(default_pr).get("charging-rule-unit")
+                cru_short_name = default_cru[:-3]
                 default_pru = policy_rule_dict.get(default_pr).get("policy-rule-unit")
                 default_flow_gate_status = policy_rule_unit_dict.get(default_pru).get("flow-gate-status")
                 missing_apps = missing_app_per_prb[prb]
@@ -181,7 +182,7 @@ def create_policy_rule_base_with_clones_yaml(policy_rule_base_yaml, application_
                     else:
                         app_pru = f"{app}_PRU"
                     
-                    pr_name = f"CL_{app}_{default_cru}" if default_flow_gate_status == "allow" else f"CL_{app}_{default_cru}_drop"
+                    pr_name = f"CL_{app}_{cru_short_name}" if default_flow_gate_status == "allow" else f"CL_{app}_{cru_short_name}_drop"
                     if pr_name not in policy_rule_dict:
                         policy_rule_dict.update(
                             {
@@ -197,7 +198,8 @@ def create_policy_rule_base_with_clones_yaml(policy_rule_base_yaml, application_
                         precedence_start += 10
                     clone_prs.append(pr_name)
             
-            prb_dict[prb].get("policy-rules").extend(list(set(clone_prs)))
+            prb_dict[prb].get("policy-rules").extend(clone_prs)
+            prb_dict[prb]["policy-rules"] = list(set(prb_dict[prb]["policy-rules"]))
 
 
     # Export all Modified Files

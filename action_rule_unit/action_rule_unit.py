@@ -20,16 +20,17 @@ def create_action_rule_yaml(policy_rule_yaml, policer_aqp_yaml):
             break
     for policer in policer_aqp_dict:
         application = policer_aqp_dict[policer]["application"]
-        value = policer_aqp_dict[policer]["characteristics"]["value"]
-        used_policer = f"{application}-{value}"
-        if used_policer not in output_action_rule_dict:
-            output_action_rule_dict.update({
-                used_policer: {
-                    "action": "characteristic",
-                    "characteristic": f"{application}-QoS",
-                    "value": value
-                }
-            })
+        for aso in policer_aqp_dict[policer]["characteristics"]:
+            value = aso["value"]
+            used_policer = f"{application}-{value}"
+            if used_policer not in output_action_rule_dict:
+                output_action_rule_dict.update({
+                    used_policer: {
+                        "action": "characteristic",
+                        "characteristic": f"{application}-QoS",
+                        "value": value
+                    }
+                })
     
     return export_yaml(output_action_rule_dict, project_name="ActionRuleUnit")
 
