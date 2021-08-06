@@ -4,11 +4,12 @@ commands:
     create_template: '/configure application-assurance group 1 http-enrich "{he_name}" create'
     template_description: '/configure application-assurance group 1 http-enrich "{he_name}" description "{description}"'
     add_template_field: '/configure application-assurance group 1 http-enrich "{he_name}" field "{field}" name {field_name}'
+    add_anti_spoof: '/configure application-assurance group 1 http-enrich "{he_name}" field "{field}" anti-spoof'
     cert_encode_field: '/configure application-assurance group 1 http-enrich "{he_name}" field "{field}" encode type certificate cert-profile {cert_profile}'
     key_encode_field: '/configure application-assurance group 1 http-enrich "{he_name}" field "{field}" encode type {encode_type} key {encode_key}'
     he_template_no_shut: '/configure application-assurance group 1 http-enrich "{he_name}" no shutdown'
-    create_aqp_entry: '/configure application-assurance group 1:1 policy app-qos-policy entry {entry} create'
+    create_aqp_entry: "/configure application-assurance group 1:1 policy app-qos-policy entry {entry} create"
     match_aqp_filter: '/configure application-assurance group 1:1 policy app-qos-policy entry {entry} match application eq "{application}"'
     aqp_action: '/configure application-assurance group 1:1 policy app-qos-policy entry {entry} action http-enrich "{he_name}"'
-    aqp_no_shut: '/configure application-assurance group 1:1 policy app-qos-policy entry {entry} no shutdown'
+    aqp_no_shut: "/configure application-assurance group 1:1 policy app-qos-policy entry {entry} no shutdown"
   rollback:

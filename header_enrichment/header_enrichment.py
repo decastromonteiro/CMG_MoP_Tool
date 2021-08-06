@@ -94,6 +94,13 @@ def create_header_enrichment_mop(he_template, header_enrichment_yaml, commands_t
                                                                field_name),
                                                            field_name=field_name)
             )
+            list_of_commands.append(
+                provision.get('add_anti_spoof').format(he_name=he_template,
+                                                       field=he_template_dicts.get(he_template).get('Fields').get(
+                                                               field_name)
+
+                )
+            )
         list_of_commands.append(provision.get('he_template_no_shut').format(he_name=he_template))
     for pr_name in http_enrich_dict:
         list_of_commands.append(provision.get('create_aqp_entry').format(
